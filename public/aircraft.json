@@ -1,0 +1,56 @@
+{
+  "aircraft": [
+    {
+      "name": "Airbus A320 Neo",
+      "code": "A32N"
+    },
+    {
+      "name": "Airbus A330-300",
+      "code": "A333"
+    },
+    {
+      "name": "Airbus A350-900",
+      "code": "A359"
+    },
+    {
+      "name": "Airbus A350-1000",
+      "code": "A35K"
+    },
+    {
+      "name": "Airbus A380-800",
+      "code": "A388"
+    },
+    {
+      "name": "ATR 42-600",
+      "code": "ATR46"
+    },
+    {
+      "name": "ATR 72-600",
+      "code": "ATR76"
+    },
+    {
+      "name": "Boeing 737-800",
+      "code": "B738"
+    },
+    {
+      "name": "Boeing 737 BBJ2",
+      "code": "BBJ2"
+    },
+    {
+      "name": "Boeing 737 MAX 8",
+      "code": "B38M"
+    },
+    {
+      "name": "Boeing 777-300ER",
+      "code": "B77W"
+    },
+    {
+      "name": "Boeing 787-9",
+      "code": "B789"
+    },
+    {
+      "name": "Boeing 787-10",
+      "code": "B78X"
+    }
+  ]
+}
