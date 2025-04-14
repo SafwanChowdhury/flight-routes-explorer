@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { MapPin, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getAirports } from "@/lib/api";
 import debounce from "lodash/debounce";
 
+const CACHE_KEY = "airports_data";
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+interface CachedData {
+  data: any[];
+  timestamp: number;
+}
+
 export default function AirportsList() {
-  const [airports, setAirports] = useState([]);
+  const [allAirports, setAllAirports] = useState([]);
+  const [filteredAirports, setFilteredAirports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
@@ -16,50 +25,77 @@ export default function AirportsList() {
   });
   const router = useRouter();
 
-  // Debounced version of loadAirports
-  const debouncedLoadAirports = useCallback(
-    debounce(async (params) => {
+  // Load all airports on initial mount
+  useEffect(() => {
+    const loadInitialAirports = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const data = await getAirports(params);
-        setAirports(data.airports);
+        // Check cache first
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          const { data, timestamp }: CachedData = JSON.parse(cachedData);
+          // If cache is not expired, use it
+          if (Date.now() - timestamp < CACHE_EXPIRY) {
+            setAllAirports(data);
+            setFilteredAirports(data);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // If no cache or cache expired, fetch from API
+        const data = await getAirports();
+        setAllAirports(data.airports);
+        setFilteredAirports(data.airports);
+
+        // Update cache
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            data: data.airports,
+            timestamp: Date.now(),
+          })
+        );
       } catch (err) {
         setError("Failed to load airports");
         console.error(err);
       } finally {
         setLoading(false);
       }
-    }, 500),
-    []
-  );
+    };
 
+    loadInitialAirports();
+  }, []);
+
+  // Client-side filtering
   useEffect(() => {
-    // Filter out empty values
-    const params = Object.fromEntries(
-      Object.entries(filters).filter(([_, v]) => v !== "")
-    );
-    debouncedLoadAirports(params);
-  }, [filters, debouncedLoadAirports]);
+    if (allAirports.length === 0) return;
+
+    const filtered = allAirports.filter((airport: any) => {
+      const matchesCountry =
+        !filters.country ||
+        airport.country.toLowerCase().includes(filters.country.toLowerCase());
+      const matchesContinent =
+        !filters.continent ||
+        airport.continent
+          .toLowerCase()
+          .includes(filters.continent.toLowerCase());
+      return matchesCountry && matchesContinent;
+    });
+
+    setFilteredAirports(filtered);
+  }, [filters, allAirports]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const applyFilters = () => {
-    loadAirports();
-  };
-
   const viewAirportRoutes = (iata: string) => {
-    // Navigate to homepage showing routes where this airport is departure OR arrival
     const params = new URLSearchParams();
-
-    // We're using a special parameter format to indicate either departure OR arrival
-    // The API doesn't directly support this, so we'll use our Routes component to handle it
     params.set("airport_iata", iata);
-
     router.push(`/?${params.toString()}`);
   };
 
@@ -100,15 +136,6 @@ export default function AirportsList() {
             />
           </div>
         </div>
-
-        <div className="mt-4">
-          <button
-            onClick={applyFilters}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            Search Airports
-          </button>
-        </div>
       </div>
 
       {/* Error message */}
@@ -126,8 +153,8 @@ export default function AirportsList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {airports.length > 0 ? (
-            airports.map((airport: any) => (
+          {filteredAirports.length > 0 ? (
+            filteredAirports.map((airport: any) => (
               <div
                 key={airport.iata}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
@@ -147,7 +174,7 @@ export default function AirportsList() {
                   <p className="mt-2 text-gray-700">
                     {airport.city_name}, {airport.country}
                   </p>
-                  <div className="mt-4 flex items-center justify-between">
+                  <div className="mt-4 flex justify-between items-center">
                     <button
                       onClick={() => viewAirportRoutes(airport.iata)}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"

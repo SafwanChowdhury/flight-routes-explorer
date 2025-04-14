@@ -19,11 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${inter.className} min-h-screen flex flex-col bg-gray-50`}
       >
         <Header />
         <Nav />
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-grow container mx-auto px-4 py-8">
+          {children}
+        </main>
         <footer className="bg-gray-100 p-2 text-center text-gray-600 text-sm">
           Flight Routes API Explorer
         </footer>
