@@ -5,11 +5,27 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, Filter, RefreshCw } from "lucide-react";
 import { getRoutes } from "@/lib/api";
 
+// Define a type for route objects
+interface Route {
+  route_id: number;
+  departure_iata: string;
+  departure_city: string;
+  departure_country: string;
+  arrival_iata: string;
+  arrival_city: string;
+  arrival_country: string;
+  distance_km: number;
+  duration_min: number;
+  airline_iata: string;
+  airline_name: string;
+  [key: string]: any;
+}
+
 export default function RoutesList() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [routes, setRoutes] = useState([]);
+  const [routes, setRoutes] = useState<Route[]>([]); // Properly typed state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
@@ -81,7 +97,7 @@ export default function RoutesList() {
     setError(null);
 
     try {
-      let allRoutes = [];
+      let allRoutes: Route[] = [];
 
       // Handle bi-directional airport filter
       if (biDirectionalMode.airport) {
@@ -445,7 +461,7 @@ export default function RoutesList() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {routes.length > 0 ? (
-                    routes.map((route: any, index) => (
+                    routes.map((route, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="font-medium text-gray-900">
