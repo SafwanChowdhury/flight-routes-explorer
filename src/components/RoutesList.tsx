@@ -7,6 +7,9 @@ import { getRoutes } from "@/lib/api";
 import RangeSlider from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
 
+// Import MUI DataGrid components
+import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+
 // Define a type for route objects
 interface Route {
   route_id: number;
@@ -68,6 +71,79 @@ export default function RoutesList() {
     country: !!country,
   });
 
+  // Define columns for MUI DataGrid
+  const columns: GridColDef[] = [
+    {
+      field: "airline_name",
+      headerName: "Airline",
+      width: 200,
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <div className="font-medium text-gray-900">{params.value || "N/A"}</div>
+      ),
+    },
+    {
+      field: "departure",
+      headerName: "Departure",
+      width: 250,
+      flex: 1.5,
+      valueGetter: (value, row) =>
+        `${row.departure_iata} (${row.departure_city}, ${row.departure_country})`,
+      renderCell: (params: GridRenderCellParams) => (
+        <div>
+          <div className="font-medium text-gray-900">
+            {params.row.departure_iata}
+          </div>
+          <div className="text-sm text-gray-500">
+            {params.row.departure_city}, {params.row.departure_country}
+          </div>
+        </div>
+      ),
+    },
+    {
+      field: "arrival",
+      headerName: "Arrival",
+      width: 250,
+      flex: 1.5,
+      valueGetter: (value, row) =>
+        `${row.arrival_iata} (${row.arrival_city}, ${row.arrival_country})`,
+      renderCell: (params: GridRenderCellParams) => (
+        <div className="flex items-center">
+          <ArrowRight className="w-4 h-4 text-gray-400 mr-2" />
+          <div>
+            <div className="font-medium text-gray-900">
+              {params.row.arrival_iata}
+            </div>
+            <div className="text-sm text-gray-500">
+              {params.row.arrival_city}, {params.row.arrival_country}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      field: "duration_min",
+      headerName: "Duration",
+      width: 150,
+      flex: 0.8,
+      valueFormatter: (value) => formatDuration(value as number),
+      renderCell: (params: GridRenderCellParams) => (
+        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+          {formatDuration(params.value as number)}
+        </span>
+      ),
+    },
+    {
+      field: "distance_km",
+      headerName: "Distance (km)",
+      width: 150,
+      flex: 0.8,
+      renderCell: (params: GridRenderCellParams) => (
+        <span className="text-gray-900">{params.value} km</span>
+      ),
+    },
+  ];
+
   // Initialize and use any URL parameters
   useEffect(() => {
     // This runs once when component loads, reading from URL
@@ -115,94 +191,133 @@ export default function RoutesList() {
     setError(null);
 
     try {
-      let allRoutes: Route[] = [];
+      // For bi-directional airport filter
+      if (biDirectionalMode.airport && airport_iata) {
+        // Prepare parameters for both directions with proper pagination
+        const limit = Math.floor(pagination.limit / 2); // Split limit between directions
+        const halfOffset = Math.floor(pagination.offset / 2);
 
-      // Handle bi-directional airport filter
-      if (biDirectionalMode.airport) {
-        // First load departure routes
+        // Load departure routes
         const departureParams = {
           departure_iata: airport_iata,
-          limit: 100, // Load more to ensure we get good coverage
-          offset: 0,
+          airline_name: filters.airline_name || undefined,
+          min_duration: durationRange[0].toString(),
+          max_duration: durationRange[1].toString(),
+          limit: pagination.limit, // Request full limit for departure
+          offset: pagination.offset, // Use full offset
         };
 
         const departureData = await getRoutes(departureParams);
 
-        // Then load arrival routes
-        const arrivalParams = {
-          arrival_iata: airport_iata,
-          limit: 100,
-          offset: 0,
-        };
+        // Load arrival routes - only if needed based on departure results
+        let arrivalData = { routes: [], pagination: { total: 0 } };
+        if (departureData.routes.length < pagination.limit) {
+          // If departure routes don't fill the page, get arrival routes for the remainder
+          const arrivalParams = {
+            arrival_iata: airport_iata,
+            airline_name: filters.airline_name || undefined,
+            min_duration: durationRange[0].toString(),
+            max_duration: durationRange[1].toString(),
+            limit: pagination.limit - departureData.routes.length,
+            offset: Math.max(
+              0,
+              pagination.offset - departureData.pagination.total
+            ),
+          };
 
-        const arrivalData = await getRoutes(arrivalParams);
+          // Only fetch arrival routes if the offset makes sense
+          if (arrivalParams.offset >= 0) {
+            arrivalData = await getRoutes(arrivalParams);
+          }
+        }
 
-        // Combine both sets of routes
-        allRoutes = [...departureData.routes, ...arrivalData.routes];
+        // Combine routes, ensuring no duplicates
+        const combinedRoutes = [...departureData.routes];
 
-        // Remove duplicates if any
-        allRoutes = allRoutes.filter(
-          (route, index, self) =>
-            index === self.findIndex((r) => r.route_id === route.route_id)
-        );
+        // Add arrival routes, checking for duplicates
+        arrivalData.routes.forEach((arrivalRoute) => {
+          // Check if this route already exists in combinedRoutes
+          const isDuplicate = combinedRoutes.some(
+            (route: Route) =>
+              `${route.route_id}-${route.airline_id || route.airline_name}` ===
+              `${arrivalRoute.route_id}-${
+                arrivalRoute.airline_id || arrivalRoute.airline_name
+              }`
+          );
+
+          if (!isDuplicate) {
+            combinedRoutes.push(arrivalRoute);
+          }
+        });
+
+        // Calculate total across both directions
+        const totalRoutes =
+          departureData.pagination.total + arrivalData.pagination.total;
+
+        setRoutes(combinedRoutes);
+        setPagination((prev) => ({
+          ...prev,
+          total: totalRoutes,
+        }));
       }
-      // Handle bi-directional country filter
-      else if (biDirectionalMode.country) {
-        // First load departure country routes
+      // For bi-directional country filter
+      else if (biDirectionalMode.country && country) {
+        // Similar approach for countries
         const departureParams = {
           departure_country: country,
-          limit: 100,
-          offset: 0,
+          airline_name: filters.airline_name || undefined,
+          min_duration: durationRange[0].toString(),
+          max_duration: durationRange[1].toString(),
+          limit: pagination.limit,
+          offset: pagination.offset,
         };
 
         const departureData = await getRoutes(departureParams);
 
-        // Then load arrival country routes
-        const arrivalParams = {
-          arrival_country: country,
-          limit: 100,
-          offset: 0,
-        };
+        let arrivalData = { routes: [], pagination: { total: 0 } };
+        if (departureData.routes.length < pagination.limit) {
+          const arrivalParams = {
+            arrival_country: country,
+            airline_name: filters.airline_name || undefined,
+            min_duration: durationRange[0].toString(),
+            max_duration: durationRange[1].toString(),
+            limit: pagination.limit - departureData.routes.length,
+            offset: Math.max(
+              0,
+              pagination.offset - departureData.pagination.total
+            ),
+          };
 
-        const arrivalData = await getRoutes(arrivalParams);
+          if (arrivalParams.offset >= 0) {
+            arrivalData = await getRoutes(arrivalParams);
+          }
+        }
 
-        // Combine both sets of routes
-        allRoutes = [...departureData.routes, ...arrivalData.routes];
+        const combinedRoutes = [...departureData.routes];
 
-        // Remove duplicates if any
-        allRoutes = allRoutes.filter(
-          (route, index, self) =>
-            index === self.findIndex((r) => r.route_id === route.route_id)
-        );
+        arrivalData.routes.forEach((arrivalRoute) => {
+          const isDuplicate = combinedRoutes.some(
+            (route: Route) =>
+              `${route.route_id}-${route.airline_id || route.airline_name}` ===
+              `${arrivalRoute.route_id}-${
+                arrivalRoute.airline_id || arrivalRoute.airline_name
+              }`
+          );
+
+          if (!isDuplicate) {
+            combinedRoutes.push(arrivalRoute);
+          }
+        });
+
+        const totalRoutes =
+          departureData.pagination.total + arrivalData.pagination.total;
+
+        setRoutes(combinedRoutes);
+        setPagination((prev) => ({
+          ...prev,
+          total: totalRoutes,
+        }));
       }
-
-      // Apply airline filter if present
-      if (filters.airline_name) {
-        allRoutes = allRoutes.filter((route) =>
-          route.airline_name
-            .toLowerCase()
-            .includes(filters.airline_name.toLowerCase())
-        );
-      }
-
-      // Apply duration filters
-      allRoutes = allRoutes.filter(
-        (route) =>
-          route.duration_min >= durationRange[0] &&
-          route.duration_min <= durationRange[1]
-      );
-
-      // Apply pagination to the combined results
-      const paginatedRoutes = allRoutes.slice(
-        pagination.offset,
-        pagination.offset + pagination.limit
-      );
-
-      setRoutes(paginatedRoutes);
-      setPagination((prev) => ({
-        ...prev,
-        total: allRoutes.length,
-      }));
     } catch (err) {
       setError("Failed to load routes");
       console.error(err);
@@ -336,6 +451,23 @@ export default function RoutesList() {
       return `Showing all routes for country: ${country} (as origin or destination)`;
     }
     return null;
+  };
+
+  // Handle pagination within the DataGrid
+  const handlePaginationModelChange = (model: any) => {
+    console.log("Pagination model changed:", model);
+    setPagination((prev) => ({
+      ...prev,
+      offset: model.page * model.pageSize,
+      limit: model.pageSize,
+    }));
+
+    // Force reload of routes when pagination changes
+    if (biDirectionalMode.airport || biDirectionalMode.country) {
+      loadRoutesWithParams();
+    } else {
+      loadRoutes();
+    }
   };
 
   return (
@@ -543,137 +675,154 @@ export default function RoutesList() {
         </div>
       )}
 
-      {/* Loading indicator */}
-      {loading ? (
-        <div className="text-center p-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading routes...</p>
-        </div>
-      ) : (
-        <div>
-          {/* Results table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Airline
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Departure
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Arrival
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {routes.length > 0 ? (
-                    routes.map((route, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">
-                            {route.airline_name || "N/A"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">
-                            {route.departure_iata}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {route.departure_city}, {route.departure_country}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <ArrowRight className="w-4 h-4 text-gray-400 mr-2" />
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {route.arrival_iata}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {route.arrival_city}, {route.arrival_country}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {formatDuration(route.duration_min)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-8 text-center text-gray-500"
-                      >
-                        No routes found matching your criteria.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+      {/* Results with MUI DataGrid */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {loading ? (
+          <div className="text-center p-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+            <p className="mt-2 text-gray-600">Loading routes...</p>
+          </div>
+        ) : (
+          <div style={{ height: 500, width: "100%" }}>
+            {/* Enhanced navigation controls */}
+            <div className="mb-4 p-3 bg-gray-50 border rounded flex flex-wrap gap-3 items-center">
+              <div className="text-sm font-medium">Navigation Controls:</div>
 
-            {/* Pagination */}
-            {routes.length > 0 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 bg-gray-50">
-                <div className="text-sm text-gray-500">
-                  Showing {pagination.offset + 1} -{" "}
+              {/* Results per page selector */}
+              <div className="flex items-center">
+                <span className="mr-2 text-sm whitespace-nowrap">
+                  Results per page:
+                </span>
+                <select
+                  className="p-2 border rounded bg-white"
+                  onChange={(e) => {
+                    const limit = parseInt(e.target.value);
+                    setPagination((prev) => ({ ...prev, limit, offset: 0 }));
+                    setTimeout(() => {
+                      if (
+                        biDirectionalMode.airport ||
+                        biDirectionalMode.country
+                      ) {
+                        loadRoutesWithParams();
+                      } else {
+                        loadRoutes();
+                      }
+                    }, 0);
+                  }}
+                  value={pagination.limit}
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="250">250</option>
+                </select>
+              </div>
+
+              {/* Jump to page control - only show if there are multiple pages */}
+              {pagination.total > pagination.limit && (
+                <div className="flex items-center">
+                  <span className="mr-2 text-sm whitespace-nowrap">
+                    Jump to page:
+                  </span>
+                  <select
+                    className="p-2 border rounded bg-white min-w-20"
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      const offset = page * pagination.limit;
+                      setPagination((prev) => ({ ...prev, offset }));
+                      setTimeout(() => {
+                        if (
+                          biDirectionalMode.airport ||
+                          biDirectionalMode.country
+                        ) {
+                          loadRoutesWithParams();
+                        } else {
+                          loadRoutes();
+                        }
+                      }, 0);
+                    }}
+                    value={Math.floor(pagination.offset / pagination.limit)}
+                  >
+                    {Array.from(
+                      {
+                        length: Math.min(
+                          100,
+                          Math.ceil(pagination.total / pagination.limit)
+                        ),
+                      },
+                      (_, i) => (
+                        <option key={i} value={i}>
+                          {i + 1} of{" "}
+                          {Math.ceil(pagination.total / pagination.limit)}
+                        </option>
+                      )
+                    )}
+                    {Math.ceil(pagination.total / pagination.limit) > 100 && (
+                      <option disabled>...</option>
+                    )}
+                  </select>
+                </div>
+              )}
+
+              {/* Page status information */}
+              {pagination.total > 0 && (
+                <div className="text-sm text-gray-600 ml-auto">
+                  Showing {pagination.offset + 1}-
                   {Math.min(
                     pagination.offset + routes.length,
                     pagination.total
                   )}{" "}
                   of {pagination.total} routes
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() =>
-                      setPagination((prev) => ({
-                        ...prev,
-                        offset: Math.max(0, prev.offset - prev.limit),
-                      }))
-                    }
-                    disabled={pagination.offset === 0}
-                    className={`px-3 py-1 border rounded ${
-                      pagination.offset === 0
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-blue-600 hover:bg-blue-50"
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() =>
-                      setPagination((prev) => ({
-                        ...prev,
-                        offset: prev.offset + prev.limit,
-                      }))
-                    }
-                    disabled={
-                      pagination.offset + pagination.limit >= pagination.total
-                    }
-                    className={`px-3 py-1 border rounded ${
-                      pagination.offset + pagination.limit >= pagination.total
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-blue-600 hover:bg-blue-50"
-                    }`}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            <DataGrid
+              rows={routes}
+              columns={columns}
+              getRowId={(row) =>
+                `${row.route_id}-${row.airline_id || row.airline_name}`
+              }
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: pagination.limit },
+                },
+              }}
+              pageSizeOptions={[10, 20, 50, 100]}
+              pagination
+              paginationMode="server"
+              rowCount={pagination.total}
+              paginationModel={{
+                page: Math.floor(pagination.offset / pagination.limit),
+                pageSize: pagination.limit,
+              }}
+              onPaginationModelChange={handlePaginationModelChange}
+              disableRowSelectionOnClick
+              autoHeight={false}
+              loading={loading}
+              localeText={{
+                noRowsLabel: "No routes found matching your criteria.",
+              }}
+              sx={{
+                width: "100%",
+                "& .MuiDataGrid-main": { overflow: "auto" },
+                "& .MuiDataGrid-virtualScroller": { overflow: "auto" },
+                "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f3f4f6" },
+                "& .MuiDataGrid-cell:focus": { outline: "none" },
+                "& .MuiDataGrid-row:hover": { backgroundColor: "#f9fafb" },
+                // Make the horizontal scrollbar visible and ensure columns stretch
+                "& .MuiDataGrid-root": {
+                  overflowX: "auto",
+                },
+                "& .MuiDataGrid-virtualScrollerContent": {
+                  minWidth: "100%",
+                },
+              }}
+            />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Custom CSS for the range slider */}
       <style jsx global>{`
