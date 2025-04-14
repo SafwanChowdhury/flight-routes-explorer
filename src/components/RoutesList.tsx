@@ -57,7 +57,7 @@ export default function RoutesList() {
   });
 
   // State for the dual range slider
-  const [durationRange, setDurationRange] = useState([
+  const [durationRange, setDurationRange] = useState<[number, number]>([
     parseInt(filters.min_duration) || MIN_DURATION,
     parseInt(filters.max_duration) || MAX_DURATION,
   ]);
@@ -255,7 +255,7 @@ export default function RoutesList() {
 
   // Handle duration range slider change
   const handleDurationRangeChange = (range: number[]) => {
-    setDurationRange(range);
+    setDurationRange(range as [number, number]);
     setFilters((prev) => ({
       ...prev,
       min_duration: range[0].toString(),
