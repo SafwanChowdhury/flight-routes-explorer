@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, Filter, RefreshCw } from "lucide-react";
+import { ArrowRight, Filter, RefreshCw, Clock } from "lucide-react";
 import { getRoutes } from "@/lib/api";
+import RangeSlider from "react-range-slider-input";
+import "react-range-slider-input/dist/style.css";
 
 // Define a type for route objects
 interface Route {
@@ -39,6 +41,10 @@ export default function RoutesList() {
   const country = searchParams.get("country");
   const auto_apply = searchParams.get("auto_apply");
 
+  // Duration range constants
+  const MIN_DURATION = 0;
+  const MAX_DURATION = 1440; // 24 hours in minutes
+
   // Regular filter parameters
   const [filters, setFilters] = useState({
     airline_name: searchParams.get("airline_name") || "",
@@ -46,9 +52,15 @@ export default function RoutesList() {
     arrival_iata: searchParams.get("arrival_iata") || "",
     departure_country: country || searchParams.get("departure_country") || "",
     arrival_country: searchParams.get("arrival_country") || "",
-    max_duration: searchParams.get("max_duration") || "",
-    min_duration: searchParams.get("min_duration") || "",
+    max_duration: searchParams.get("max_duration") || MAX_DURATION.toString(),
+    min_duration: searchParams.get("min_duration") || MIN_DURATION.toString(),
   });
+
+  // State for the dual range slider
+  const [durationRange, setDurationRange] = useState([
+    parseInt(filters.min_duration) || MIN_DURATION,
+    parseInt(filters.max_duration) || MAX_DURATION,
+  ]);
 
   // Flag to track if we're doing a bi-directional query
   const [biDirectionalMode, setBiDirectionalMode] = useState({
@@ -60,6 +72,12 @@ export default function RoutesList() {
   useEffect(() => {
     // This runs once when component loads, reading from URL
     if (searchParams.toString()) {
+      // Set duration range from URL parameters
+      setDurationRange([
+        parseInt(filters.min_duration) || MIN_DURATION,
+        parseInt(filters.max_duration) || MAX_DURATION,
+      ]);
+
       // If auto_apply is true, apply filters immediately
       if (auto_apply === "true") {
         // Remove auto_apply from URL but keep other parameters
@@ -167,6 +185,13 @@ export default function RoutesList() {
         );
       }
 
+      // Apply duration filters
+      allRoutes = allRoutes.filter(
+        (route) =>
+          route.duration_min >= durationRange[0] &&
+          route.duration_min <= durationRange[1]
+      );
+
       // Apply pagination to the combined results
       const paginatedRoutes = allRoutes.slice(
         pagination.offset,
@@ -195,6 +220,8 @@ export default function RoutesList() {
       const params = Object.fromEntries(
         Object.entries({
           ...filters,
+          min_duration: durationRange[0].toString(),
+          max_duration: durationRange[1].toString(),
           limit: pagination.limit,
           offset: pagination.offset,
         }).filter(([_, v]) => v !== "")
@@ -226,6 +253,27 @@ export default function RoutesList() {
     }
   };
 
+  // Handle duration range slider change
+  const handleDurationRangeChange = (range: number[]) => {
+    setDurationRange(range);
+    setFilters((prev) => ({
+      ...prev,
+      min_duration: range[0].toString(),
+      max_duration: range[1].toString(),
+    }));
+  };
+
+  // Format duration to hours and minutes
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
   const applyFilters = () => {
     setPagination((prev) => ({ ...prev, offset: 0 }));
 
@@ -243,6 +291,10 @@ export default function RoutesList() {
       }
     });
 
+    // Add duration range
+    params.set("min_duration", durationRange[0].toString());
+    params.set("max_duration", durationRange[1].toString());
+
     // Update URL without refreshing page
     const url = params.toString() ? `/?${params.toString()}` : "/";
     router.push(url, { scroll: false });
@@ -257,9 +309,12 @@ export default function RoutesList() {
       arrival_iata: "",
       departure_country: "",
       arrival_country: "",
-      max_duration: "",
-      min_duration: "",
+      max_duration: MAX_DURATION.toString(),
+      min_duration: MIN_DURATION.toString(),
     });
+
+    // Reset duration range
+    setDurationRange([MIN_DURATION, MAX_DURATION]);
 
     // Exit bi-directional mode when clearing
     setBiDirectionalMode({
@@ -374,33 +429,90 @@ export default function RoutesList() {
               placeholder="e.g. United States"
             />
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Min Duration
-              </label>
-              <input
-                type="number"
-                name="min_duration"
-                value={filters.min_duration}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded"
-                placeholder="Minutes"
+        {/* Duration Range Slider and Inputs */}
+        <div className="mt-4">
+          <div className="flex items-center mb-2">
+            <Clock className="w-4 h-4 mr-2 text-gray-700" />
+            <label className="text-sm font-medium text-gray-700">
+              Flight Duration Range
+            </label>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            {/* Text inputs for duration */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-1/3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Min Duration ({formatDuration(durationRange[0])})
+                </label>
+                <input
+                  type="number"
+                  name="min_duration"
+                  value={durationRange[0]}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (
+                      !isNaN(value) &&
+                      value >= MIN_DURATION &&
+                      value <= durationRange[1]
+                    ) {
+                      handleDurationRangeChange([value, durationRange[1]]);
+                    }
+                  }}
+                  className="w-full p-2 text-sm border rounded"
+                  placeholder="Minutes"
+                  min={MIN_DURATION}
+                  max={durationRange[1]}
+                />
+              </div>
+
+              <div className="w-1/3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Max Duration ({formatDuration(durationRange[1])})
+                </label>
+                <input
+                  type="number"
+                  name="max_duration"
+                  value={durationRange[1]}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (
+                      !isNaN(value) &&
+                      value <= MAX_DURATION &&
+                      value >= durationRange[0]
+                    ) {
+                      handleDurationRangeChange([durationRange[0], value]);
+                    }
+                  }}
+                  className="w-full p-2 text-sm border rounded"
+                  placeholder="Minutes"
+                  min={durationRange[0]}
+                  max={MAX_DURATION}
+                />
+              </div>
+            </div>
+
+            {/* Range Slider Component */}
+            <div className="py-2">
+              <RangeSlider
+                min={MIN_DURATION}
+                max={MAX_DURATION}
+                step={5}
+                value={durationRange}
+                onInput={handleDurationRangeChange}
+                className="custom-range-slider"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Max Duration
-              </label>
-              <input
-                type="number"
-                name="max_duration"
-                value={filters.max_duration}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded"
-                placeholder="Minutes"
-              />
+
+            {/* Duration markers */}
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+              <span>18h</span>
+              <span>24h</span>
             </div>
           </div>
         </div>
@@ -491,7 +603,7 @@ export default function RoutesList() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {route.duration_min} min
+                            {formatDuration(route.duration_min)}
                           </span>
                         </td>
                       </tr>
@@ -562,6 +674,31 @@ export default function RoutesList() {
           </div>
         </div>
       )}
+
+      {/* Custom CSS for the range slider */}
+      <style jsx global>{`
+        .custom-range-slider .range-slider {
+          height: 6px;
+          background: #e5e7eb;
+          border-radius: 4px;
+        }
+
+        .custom-range-slider .range-slider__range {
+          background: #3b82f6;
+          border-radius: 4px;
+        }
+
+        .custom-range-slider .range-slider__thumb {
+          background: white;
+          border: 2px solid #3b82f6;
+          width: 16px;
+          height: 16px;
+        }
+
+        .custom-range-slider .range-slider__thumb:hover {
+          transform: scale(1.1);
+        }
+      `}</style>
     </div>
   );
 }
