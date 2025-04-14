@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flight Routes Explorer - Running Instructions
 
-## Getting Started
+## Prerequisites
 
-First, run the development server:
+- Make sure Node.js and npm are installed on your machine
+- Ensure your Flight Routes API server is running on <http://localhost:3000>
+
+## Steps to Run
+
+1. Create the project:
+
+```bash
+npx create-next-app@latest flight-routes-explorer --typescript --eslint --tailwind --app
+cd flight-routes-explorer
+```
+
+2. Install dependencies:
+
+```bash
+npm install lucide-react recharts axios
+```
+
+3. Create the project files as shown in the artifacts provided
+
+4. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will start, typically on <http://localhost:3001> (since port 3000 is already in use by your API server).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Fixes Applied
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Hydration Mismatch Fix**:
+   - Added a mounted state check in the Header component to avoid hydration mismatches
+   - Improved the layout structure to ensure client-side and server-side rendering match
 
-## Learn More
+2. **Working "View Routes" Buttons**:
+   - All "View Routes" buttons now navigate to the main routes page with appropriate filters
+   - Airport routes button navigates to `/?departure_iata=IATA_CODE`
+   - Airline routes button navigates to `/?airline_name=AIRLINE_NAME`
+   - Country routes button navigates to `/?departure_country=COUNTRY_NAME`
 
-To learn more about Next.js, take a look at the following resources:
+3. **URL Parameter Support**:
+   - Added URL parameter support to maintain filter state for sharing and bookmarking
+   - Routes page now reads filters from URL parameters when loaded
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Responsive layout** that works on mobile and desktop
+- **Real-time data fetching** from your API server
+- **Client-side filtering** with URL parameter support
+- **Pagination** for routes data
+- **Loading states** during data fetching
+- **Error handling** for API failures
 
-## Deploy on Vercel
+## API Integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application connects to your Flight Routes API server running on localhost:3000, using the following endpoints:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/stats` - To get database statistics
+- `/routes` - To search and filter routes
+- `/airports` - To browse and filter airports
+- `/airlines` - To list all airlines
+- `/countries` - To list all countries
+
+## Troubleshooting
+
+If you experience CORS issues, you may need to add CORS headers to your Node.js API server. Add this to your server code:
+
+```javascript
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+```
+
+Or install and use the cors package:
+
+```javascript
+const cors = require('cors');
+app.use(cors());
+```
