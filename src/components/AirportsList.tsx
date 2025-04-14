@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapPin, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getAirports } from "@/lib/api";
+import debounce from "lodash/debounce";
 
 export default function AirportsList() {
   const [airports, setAirports] = useState([]);
@@ -15,29 +16,32 @@ export default function AirportsList() {
   });
   const router = useRouter();
 
+  // Debounced version of loadAirports
+  const debouncedLoadAirports = useCallback(
+    debounce(async (params) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await getAirports(params);
+        setAirports(data.airports);
+      } catch (err) {
+        setError("Failed to load airports");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }, 500),
+    []
+  );
+
   useEffect(() => {
-    loadAirports();
-  }, []);
-
-  const loadAirports = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Filter out empty values
-      const params = Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== "")
-      );
-
-      const data = await getAirports(params);
-      setAirports(data.airports);
-    } catch (err) {
-      setError("Failed to load airports");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Filter out empty values
+    const params = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "")
+    );
+    debouncedLoadAirports(params);
+  }, [filters, debouncedLoadAirports]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

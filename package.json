@@ -9,9 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/lodash": "^4.17.16",
     "airline-codes": "^1.0.3",
     "axios": "^1.8.4",
     "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.488.0",
     "next": "15.3.0",
     "react": "^19.0.0",
