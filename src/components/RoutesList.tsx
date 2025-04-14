@@ -154,20 +154,23 @@ export default function RoutesList() {
         parseInt(filters.max_duration) || MAX_DURATION,
       ]);
 
-      // If auto_apply is true, apply filters immediately
-      if (auto_apply === "true") {
+      // Check for airport_iata or country parameters - these should always trigger a data load
+      if (airport_iata || country) {
+        // If we have airport_iata or country parameters, always load the data
+        if (biDirectionalMode.airport || biDirectionalMode.country) {
+          loadRoutesWithParams();
+        }
+      }
+      // Otherwise check for auto_apply
+      else if (auto_apply === "true") {
         // Remove auto_apply from URL but keep other parameters
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.delete("auto_apply");
         router.replace(`/?${newParams.toString()}`, { scroll: false });
 
-        if (biDirectionalMode.airport || biDirectionalMode.country) {
-          loadRoutesWithParams();
-        } else {
-          loadRoutes();
-        }
+        loadRoutes();
       } else {
-        // Otherwise just show the forms with pre-filled values but don't search yet
+        // For other parameters without auto_apply, just show the forms
         setLoading(false);
       }
     } else {
@@ -238,7 +241,7 @@ export default function RoutesList() {
         arrivalData.routes.forEach((arrivalRoute) => {
           // Check if this route already exists in combinedRoutes
           const isDuplicate = combinedRoutes.some(
-            (route: Route) =>
+            (route) =>
               `${route.route_id}-${route.airline_id || route.airline_name}` ===
               `${arrivalRoute.route_id}-${
                 arrivalRoute.airline_id || arrivalRoute.airline_name
@@ -297,7 +300,7 @@ export default function RoutesList() {
 
         arrivalData.routes.forEach((arrivalRoute) => {
           const isDuplicate = combinedRoutes.some(
-            (route: Route) =>
+            (route) =>
               `${route.route_id}-${route.airline_id || route.airline_name}` ===
               `${arrivalRoute.route_id}-${
                 arrivalRoute.airline_id || arrivalRoute.airline_name
