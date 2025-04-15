@@ -38,13 +38,13 @@ export default function AirlinesList() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Explore Airlines
       </h2>
 
       {/* Error message */}
       {error && (
-        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
+        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
           {error}
         </div>
       )}
@@ -52,48 +52,53 @@ export default function AirlinesList() {
       {/* Loading indicator */}
       {loading ? (
         <div className="text-center p-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading airlines...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Loading airlines...
+          </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     IATA
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {airlines.length > 0 ? (
                   airlines.map((airline: any) => (
-                    <tr key={airline.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <tr
+                      key={airline.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {airline.id}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 dark:text-gray-200">
                           {airline.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {airline.iata || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={() => viewAirlineRoutes(airline.name)}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                         >
                           View Routes
                         </button>
@@ -104,7 +109,7 @@ export default function AirlinesList() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-6 py-8 text-center text-gray-500"
+                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No airlines found.
                     </td>

@@ -77,11 +77,11 @@ export default function RouteFilters({
     <div>
       {/* Bi-directional filter message */}
       {biDirectionalMessage && (
-        <div className="p-4 mb-4 bg-blue-100 text-blue-800 rounded-md flex justify-between items-center">
+        <div className="p-4 mb-4 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-md flex justify-between items-center">
           <span>{biDirectionalMessage}</span>
           <button
             onClick={onClearFilters}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
           >
             Clear Filter
           </button>
@@ -89,10 +89,10 @@ export default function RouteFilters({
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Airline
             </label>
             <input
@@ -100,13 +100,13 @@ export default function RouteFilters({
               name="airline_name"
               value={filters.airline_name}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. British Airways"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               From (IATA)
             </label>
             <input
@@ -114,13 +114,13 @@ export default function RouteFilters({
               name="departure_iata"
               value={filters.departure_iata}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. LHR"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               To (IATA)
             </label>
             <input
@@ -128,13 +128,13 @@ export default function RouteFilters({
               name="arrival_iata"
               value={filters.arrival_iata}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. JFK"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               From Country
             </label>
             <input
@@ -142,13 +142,13 @@ export default function RouteFilters({
               name="departure_country"
               value={filters.departure_country}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. United Kingdom"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               To Country
             </label>
             <input
@@ -156,7 +156,7 @@ export default function RouteFilters({
               name="arrival_country"
               value={filters.arrival_country}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. United States"
             />
           </div>
@@ -165,17 +165,17 @@ export default function RouteFilters({
         {/* Duration Range Slider and Inputs */}
         <div className="mt-4">
           <div className="flex items-center mb-2">
-            <Clock className="w-4 h-4 mr-2 text-gray-700" />
-            <label className="text-sm font-medium text-gray-700">
+            <Clock className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-300" />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Flight Duration Range
             </label>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
             {/* Text inputs for duration */}
             <div className="flex items-center justify-between mb-4">
               <div className="w-1/3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Min Duration ({formatDuration(durationRange[0])})
                 </label>
                 <input
@@ -192,7 +192,7 @@ export default function RouteFilters({
                       handleDurationRangeChange([value, durationRange[1]]);
                     }
                   }}
-                  className="w-full p-2 text-sm border rounded"
+                  className="w-full p-2 text-sm border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Minutes"
                   min={MIN_DURATION}
                   max={durationRange[1]}
@@ -200,7 +200,7 @@ export default function RouteFilters({
               </div>
 
               <div className="w-1/3">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Max Duration ({formatDuration(durationRange[1])})
                 </label>
                 <input
@@ -217,7 +217,7 @@ export default function RouteFilters({
                       handleDurationRangeChange([durationRange[0], value]);
                     }
                   }}
-                  className="w-full p-2 text-sm border rounded"
+                  className="w-full p-2 text-sm border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Minutes"
                   min={durationRange[0]}
                   max={MAX_DURATION}
@@ -238,7 +238,7 @@ export default function RouteFilters({
             </div>
 
             {/* Duration markers */}
-            <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>0h</span>
               <span>6h</span>
               <span>12h</span>
@@ -251,7 +251,7 @@ export default function RouteFilters({
         <div className="mt-4 flex space-x-3">
           <button
             onClick={onApplyFilters}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded transition"
           >
             <Filter className="w-4 h-4 mr-2" />
             Apply Filters
@@ -259,7 +259,7 @@ export default function RouteFilters({
 
           <button
             onClick={onClearFilters}
-            className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+            className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Clear Filters
@@ -275,6 +275,10 @@ export default function RouteFilters({
           border-radius: 4px;
         }
 
+        .dark .custom-range-slider .range-slider {
+          background: #4b5563;
+        }
+
         .custom-range-slider .range-slider__range {
           background: #3b82f6;
           border-radius: 4px;
@@ -285,6 +289,10 @@ export default function RouteFilters({
           border: 2px solid #3b82f6;
           width: 16px;
           height: 16px;
+        }
+
+        .dark .custom-range-slider .range-slider__thumb {
+          background: #1f2937;
         }
 
         .custom-range-slider .range-slider__thumb:hover {

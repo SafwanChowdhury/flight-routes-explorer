@@ -296,7 +296,7 @@ export default function RoutesList() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Search Flight Routes
       </h2>
 
@@ -312,7 +312,7 @@ export default function RoutesList() {
 
       {/* Error message */}
       {error && (
-        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
+        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
           {error}
         </div>
       )}
@@ -320,67 +320,69 @@ export default function RoutesList() {
       {/* Loading indicator */}
       {loading ? (
         <div className="text-center p-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading routes...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Loading routes...
+          </p>
         </div>
       ) : (
         <div>
           {/* Results table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Airline
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Departure
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Arrival
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Duration
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {routes.length > 0 ? (
                     routes.map((route, index) => (
                       <tr
                         key={index}
-                        className="hover:bg-gray-50 cursor-pointer"
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         onClick={() => setSelectedRoute(route)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-gray-900 dark:text-gray-200">
                             {route.airline_name || "N/A"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-gray-900 dark:text-gray-200">
                             {route.departure_iata}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {route.departure_city}, {route.departure_country}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <ArrowRight className="w-4 h-4 text-gray-400 mr-2" />
+                            <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" />
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-gray-900 dark:text-gray-200">
                                 {route.arrival_iata}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
                                 {route.arrival_city}, {route.arrival_country}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                             {formatDuration(route.duration_min)}
                           </span>
                         </td>
@@ -390,7 +392,7 @@ export default function RoutesList() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-6 py-8 text-center text-gray-500"
+                        className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                       >
                         No routes found matching your criteria.
                       </td>
@@ -402,8 +404,8 @@ export default function RoutesList() {
 
             {/* Pagination */}
             {routes.length > 0 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 bg-gray-50">
-                <div className="text-sm text-gray-500">
+              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   Showing {pagination.offset + 1} -{" "}
                   {Math.min(
                     pagination.offset + routes.length,
@@ -422,8 +424,8 @@ export default function RoutesList() {
                     disabled={pagination.offset === 0}
                     className={`px-3 py-1 border rounded ${
                       pagination.offset === 0
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-blue-600 hover:bg-blue-50"
+                        ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                        : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
                     }`}
                   >
                     Previous
@@ -440,8 +442,8 @@ export default function RoutesList() {
                     }
                     className={`px-3 py-1 border rounded ${
                       pagination.offset + pagination.limit >= pagination.total
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white text-blue-600 hover:bg-blue-50"
+                        ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                        : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
                     }`}
                   >
                     Next

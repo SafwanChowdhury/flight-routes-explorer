@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import { getStats } from "@/lib/api";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const [stats, setStats] = useState<any>(null);
@@ -27,13 +28,13 @@ export default function Header() {
   const renderedStats = mounted ? (
     stats && (
       <div className="text-sm">
-        <span className="px-2 py-1 bg-blue-800 rounded-md mr-2">
+        <span className="px-2 py-1 bg-blue-800 dark:bg-blue-700 rounded-md mr-2">
           {stats.counts?.airlines || 0} Airlines
         </span>
-        <span className="px-2 py-1 bg-blue-800 rounded-md mr-2">
+        <span className="px-2 py-1 bg-blue-800 dark:bg-blue-700 rounded-md mr-2">
           {stats.counts?.airports || 0} Airports
         </span>
-        <span className="px-2 py-1 bg-blue-800 rounded-md">
+        <span className="px-2 py-1 bg-blue-800 dark:bg-blue-700 rounded-md">
           {stats.counts?.routes || 0} Routes
         </span>
       </div>
@@ -43,13 +44,16 @@ export default function Header() {
   );
 
   return (
-    <header className="bg-blue-700 text-white p-4 shadow-md">
+    <header className="bg-blue-700 dark:bg-blue-800 text-white p-4 shadow-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Globe className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Flight Routes Explorer</h1>
         </div>
-        {renderedStats}
+        <div className="flex items-center space-x-4">
+          {renderedStats}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

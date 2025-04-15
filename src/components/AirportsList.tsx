@@ -111,15 +111,15 @@ export default function AirportsList() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Explore Airports
       </h2>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Country
             </label>
             <input
@@ -127,13 +127,13 @@ export default function AirportsList() {
               name="country"
               value={filters.country}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. United States"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Continent Code
             </label>
             <input
@@ -141,7 +141,7 @@ export default function AirportsList() {
               name="continent"
               value={filters.continent}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. EU"
             />
           </div>
@@ -150,7 +150,7 @@ export default function AirportsList() {
 
       {/* Error message */}
       {error && (
-        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
+        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
           {error}
         </div>
       )}
@@ -158,8 +158,10 @@ export default function AirportsList() {
       {/* Loading indicator */}
       {loading ? (
         <div className="text-center p-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading airports...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Loading airports...
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -167,32 +169,34 @@ export default function AirportsList() {
             filteredAirports.map((airport: any) => (
               <div
                 key={airport.iata}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
               >
                 <div className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                         {airport.iata}
                       </h3>
-                      <p className="text-sm text-gray-500">{airport.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {airport.name}
+                      </p>
                     </div>
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                       {airport.continent}
                     </span>
                   </div>
-                  <p className="mt-2 text-gray-700">
+                  <p className="mt-2 text-gray-700 dark:text-gray-300">
                     {airport.city_name}, {airport.country}
                   </p>
                   <div className="mt-4 flex justify-between items-center">
                     <button
                       onClick={() => viewAirportRoutes(airport.iata)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center"
                     >
                       <Plane className="w-4 h-4 mr-1" />
                       View Routes
                     </button>
-                    <div className="text-gray-500 text-sm">
+                    <div className="text-gray-500 dark:text-gray-400 text-sm">
                       <MapPin className="w-4 h-4 inline mr-1" />
                       {airport.latitude?.toFixed(2)},{" "}
                       {airport.longitude?.toFixed(2)}
@@ -202,7 +206,7 @@ export default function AirportsList() {
               </div>
             ))
           ) : (
-            <div className="col-span-3 p-8 bg-white rounded-lg shadow-md text-center text-gray-500">
+            <div className="col-span-3 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md text-center text-gray-500 dark:text-gray-400">
               No airports found matching your criteria.
             </div>
           )}

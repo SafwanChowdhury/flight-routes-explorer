@@ -42,13 +42,13 @@ export default function CountriesList() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Explore Countries
       </h2>
 
       {/* Error message */}
       {error && (
-        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
+        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
           {error}
         </div>
       )}
@@ -56,8 +56,10 @@ export default function CountriesList() {
       {/* Loading indicator */}
       {loading ? (
         <div className="text-center p-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading countries...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Loading countries...
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -65,25 +67,25 @@ export default function CountriesList() {
             countries.map((country: any, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
               >
                 <div className="p-4">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                       {country.country}
                     </h3>
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
                       {country.continent}
                     </span>
                   </div>
-                  <div className="mt-2 flex items-center text-gray-600">
+                  <div className="mt-2 flex items-center text-gray-600 dark:text-gray-400">
                     <Globe className="w-4 h-4 mr-1" />
                     <span>{country.country_code}</span>
                   </div>
                   <div className="mt-4">
                     <button
                       onClick={() => viewCountryRoutes(country.country)}
-                      className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center"
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded transition flex items-center justify-center"
                     >
                       <Plane className="w-4 h-4 mr-2" />
                       View Routes
@@ -93,7 +95,7 @@ export default function CountriesList() {
               </div>
             ))
           ) : (
-            <div className="col-span-3 p-8 bg-white rounded-lg shadow-md text-center text-gray-500">
+            <div className="col-span-3 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md text-center text-gray-500 dark:text-gray-400">
               No countries found.
             </div>
           )}
