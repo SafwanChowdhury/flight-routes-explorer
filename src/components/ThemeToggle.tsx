@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
 
 export default function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   // Initialize theme based on system preferences or localStorage
   useEffect(() => {
+    setMounted(true);
     // Check if dark mode is already set in localStorage
     const savedTheme = localStorage.getItem("theme");
 
@@ -39,6 +41,18 @@ export default function ThemeToggle() {
       localStorage.setItem("theme", "dark");
     }
   };
+
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <button
+        className="flex items-center justify-center w-8 h-8 rounded-full text-gray-400"
+        aria-label="Toggle theme"
+      >
+        <Moon className="h-5 w-5" />
+      </button>
+    );
+  }
 
   return (
     <button

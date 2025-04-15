@@ -59,7 +59,8 @@ export default function AirlinesList() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -117,6 +118,44 @@ export default function AirlinesList() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            {airlines.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {airlines.map((airline: any) => (
+                  <div
+                    key={airline.id}
+                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-gray-200">
+                          {airline.name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          ID: {airline.id}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          IATA: {airline.iata || "N/A"}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => viewAirlineRoutes(airline.name)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                      >
+                        View Routes
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                No airlines found.
+              </div>
+            )}
           </div>
         </div>
       )}

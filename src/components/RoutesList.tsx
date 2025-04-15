@@ -329,7 +329,8 @@ export default function RoutesList() {
         <div>
           {/* Results table */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
@@ -381,10 +382,8 @@ export default function RoutesList() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                            {formatDuration(route.duration_min)}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {formatDuration(route.duration_min)}
                         </td>
                       </tr>
                     ))
@@ -394,7 +393,7 @@ export default function RoutesList() {
                         colSpan={4}
                         className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                       >
-                        No routes found matching your criteria.
+                        No routes found.
                       </td>
                     </tr>
                   )}
@@ -402,56 +401,100 @@ export default function RoutesList() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {routes.length > 0 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Showing {pagination.offset + 1} -{" "}
-                  {Math.min(
-                    pagination.offset + routes.length,
-                    pagination.total
-                  )}{" "}
-                  of {pagination.total} routes
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+              {routes.length > 0 ? (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {routes.map((route, index) => (
+                    <div
+                      key={index}
+                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                      onClick={() => setSelectedRoute(route)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-medium text-gray-900 dark:text-gray-200">
+                          {route.airline_name || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {formatDuration(route.duration_min)}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-200">
+                            {route.departure_iata}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {route.departure_city}, {route.departure_country}
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-200">
+                            {route.arrival_iata}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {route.arrival_city}, {route.arrival_country}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() =>
-                      setPagination((prev) => ({
-                        ...prev,
-                        offset: Math.max(0, prev.offset - prev.limit),
-                      }))
-                    }
-                    disabled={pagination.offset === 0}
-                    className={`px-3 py-1 border rounded ${
-                      pagination.offset === 0
-                        ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                        : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() =>
-                      setPagination((prev) => ({
-                        ...prev,
-                        offset: prev.offset + prev.limit,
-                      }))
-                    }
-                    disabled={
-                      pagination.offset + pagination.limit >= pagination.total
-                    }
-                    className={`px-3 py-1 border rounded ${
-                      pagination.offset + pagination.limit >= pagination.total
-                        ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                        : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
-                    }`}
-                  >
-                    Next
-                  </button>
+              ) : (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  No routes found.
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Pagination */}
+          {routes.length > 0 && (
+            <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Showing {pagination.offset + 1} -{" "}
+                {Math.min(pagination.offset + routes.length, pagination.total)}{" "}
+                of {pagination.total} routes
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      offset: Math.max(0, prev.offset - prev.limit),
+                    }))
+                  }
+                  disabled={pagination.offset === 0}
+                  className={`px-3 py-1 border rounded ${
+                    pagination.offset === 0
+                      ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      offset: prev.offset + prev.limit,
+                    }))
+                  }
+                  disabled={
+                    pagination.offset + pagination.limit >= pagination.total
+                  }
+                  className={`px-3 py-1 border rounded ${
+                    pagination.offset + pagination.limit >= pagination.total
+                      ? "bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      : "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
