@@ -28,7 +28,7 @@ export default function Nav() {
 
   return (
     <nav className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-      <div className="flex">
+      <div className="flex overflow-x-auto whitespace-nowrap">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
 
@@ -36,7 +36,7 @@ export default function Nav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center px-4 py-3 space-x-2 transition ${
+              className={`flex items-center px-4 py-3 space-x-2 transition flex-shrink-0 ${
                 isActive
                   ? "text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-400 font-medium"
                   : "text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-50 dark:hover:bg-gray-700"
