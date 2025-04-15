@@ -14,9 +14,19 @@ interface CachedData {
   timestamp: number;
 }
 
+interface Airport {
+  iata: string;
+  name: string;
+  city_name: string;
+  country: string;
+  continent: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 export default function AirportsList() {
-  const [allAirports, setAllAirports] = useState([]);
-  const [filteredAirports, setFilteredAirports] = useState([]);
+  const [allAirports, setAllAirports] = useState<Airport[]>([]);
+  const [filteredAirports, setFilteredAirports] = useState<Airport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
