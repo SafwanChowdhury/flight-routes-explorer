@@ -1,8 +1,20 @@
 {
   "aircraft": [
     {
+      "name": "Airbus A319",
+      "code": "A319"
+    },
+    {
       "name": "Airbus A320 Neo",
       "code": "A20N"
+    },
+    {
+      "name": "Airbus A320",
+      "code": "A320"
+    },
+    {
+      "name": "Airbus A321",
+      "code": "A321"
     },
     {
       "name": "Airbus A330-300",
