@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAirlines } from "@/lib/api";
+import AirlineSearchInput from "./AirlineSearchInput";
 
 export default function AirlinesList() {
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -30,17 +32,40 @@ export default function AirlinesList() {
   };
 
   const viewAirlineRoutes = (airlineName: string) => {
-    // Navigate to routes page with airline filter
     router.push(
       `/?airline_name=${encodeURIComponent(airlineName)}&auto_apply=true`
     );
   };
+
+  const handleAirlineSelect = (result: any) => {
+    viewAirlineRoutes(result.name);
+  };
+
+  const filteredAirlines = airlines.filter(
+    (airline: any) =>
+      airline.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (airline.iata &&
+        airline.iata.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Explore Airlines
       </h2>
+
+      {/* Search */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Search Airlines
+        </label>
+        <AirlineSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search airline name or IATA code..."
+          onSelect={handleAirlineSelect}
+        />
+      </div>
 
       {/* Error message */}
       {error && (
@@ -65,10 +90,7 @@ export default function AirlinesList() {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Name
+                    Airline
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     IATA
@@ -79,15 +101,12 @@ export default function AirlinesList() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {airlines.length > 0 ? (
-                  airlines.map((airline: any) => (
+                {filteredAirlines.length > 0 ? (
+                  filteredAirlines.map((airline: any) => (
                     <tr
                       key={airline.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {airline.id}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900 dark:text-gray-200">
                           {airline.name}
@@ -109,7 +128,7 @@ export default function AirlinesList() {
                 ) : (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={3}
                       className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No airlines found.
@@ -122,9 +141,9 @@ export default function AirlinesList() {
 
           {/* Mobile Card View */}
           <div className="md:hidden">
-            {airlines.length > 0 ? (
+            {filteredAirlines.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {airlines.map((airline: any) => (
+                {filteredAirlines.map((airline: any) => (
                   <div
                     key={airline.id}
                     className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -135,9 +154,6 @@ export default function AirlinesList() {
                           {airline.name}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          ID: {airline.id}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           IATA: {airline.iata || "N/A"}
                         </div>
                       </div>

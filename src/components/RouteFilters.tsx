@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Filter, RefreshCw, Clock } from "lucide-react";
 import RangeSlider from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
+import SearchInput from "./SearchInput";
+import AirlineSearchInput from "./AirlineSearchInput";
 
 interface RouteFiltersProps {
   onApplyFilters: () => void;
@@ -52,14 +54,17 @@ export default function RouteFilters({
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle duration range slider change
-  const handleDurationRangeChange = (range: number[]) => {
-    setDurationRange(range as [number, number]);
-    setFilters((prev) => ({
-      ...prev,
-      min_duration: range[0].toString(),
-      max_duration: range[1].toString(),
-    }));
+  const handleDurationRangeChange = (value: [number, number]) => {
+    setDurationRange(value);
+  };
+
+  const handleAirportSelect =
+    (field: "departure_iata" | "arrival_iata") => (result: any) => {
+      setFilters((prev) => ({ ...prev, [field]: result.iata }));
+    };
+
+  const handleAirlineSelect = (result: any) => {
+    setFilters((prev) => ({ ...prev, airline_name: result.name }));
   };
 
   // Format duration to hours and minutes
@@ -95,41 +100,41 @@ export default function RouteFilters({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Airline
             </label>
-            <input
-              type="text"
-              name="airline_name"
+            <AirlineSearchInput
               value={filters.airline_name}
-              onChange={handleInputChange}
-              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="e.g. British Airways"
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, airline_name: value }))
+              }
+              placeholder="Search airline..."
+              onSelect={handleAirlineSelect}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              From (IATA)
+              From
             </label>
-            <input
-              type="text"
-              name="departure_iata"
+            <SearchInput
               value={filters.departure_iata}
-              onChange={handleInputChange}
-              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="e.g. LHR"
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, departure_iata: value }))
+              }
+              placeholder="Search airport or city..."
+              onSelect={handleAirportSelect("departure_iata")}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              To (IATA)
+              To
             </label>
-            <input
-              type="text"
-              name="arrival_iata"
+            <SearchInput
               value={filters.arrival_iata}
-              onChange={handleInputChange}
-              className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="e.g. JFK"
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, arrival_iata: value }))
+              }
+              placeholder="Search airport or city..."
+              onSelect={handleAirportSelect("arrival_iata")}
             />
           </div>
 
@@ -248,21 +253,21 @@ export default function RouteFilters({
           </div>
         </div>
 
-        <div className="mt-4 flex space-x-3">
-          <button
-            onClick={onApplyFilters}
-            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded transition"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
-          </button>
-
+        {/* Action Buttons */}
+        <div className="mt-4 flex justify-end space-x-2">
           <button
             onClick={onClearFilters}
-            className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md flex items-center"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Clear Filters
+          </button>
+          <button
+            onClick={onApplyFilters}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-md flex items-center"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Apply Filters
           </button>
         </div>
       </div>
