@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plane, MapPin, Search, Globe } from "lucide-react";
+import { Plane, MapPin, Search, Globe, Calendar } from "lucide-react";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -23,6 +23,11 @@ export default function Nav() {
       href: "/countries",
       icon: <Globe className="h-5 w-5" />,
       label: "Countries",
+    },
+    {
+      href: "/schedule",
+      icon: <Calendar className="h-5 w-5" />,
+      label: "Schedule",
     },
   ];
 
