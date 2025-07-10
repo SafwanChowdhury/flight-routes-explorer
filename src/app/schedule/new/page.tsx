@@ -62,10 +62,20 @@ export default function NewSchedulePage() {
       setLoading(true);
       try {
         const data = await getAirlines();
-        setAirlines(data.airlines || []);
-      } catch (err) {
+        if (data.airlines && data.airlines.length > 0) {
+          setAirlines(data.airlines);
+        } else {
+          setError("No airlines available. Please try again later.");
+        }
+      } catch (err: any) {
         console.error("Failed to load airlines:", err);
-        setError("Failed to load airlines. Please try again.");
+        if (err.response?.status === 404) {
+          setError("Airlines service not available. Please try again later.");
+        } else if (err.code === "NETWORK_ERROR") {
+          setError("Network error. Please check your connection and try again.");
+        } else {
+          setError("Failed to load airlines. Please try again.");
+        }
       } finally {
         setLoading(false);
       }
@@ -95,6 +105,39 @@ export default function NewSchedulePage() {
     formData.haul_preferences.short,
     formData.haul_preferences.medium,
     formData.haul_preferences.long,
+  ]);
+
+  // Normalize haul weighting to ensure they sum to 1.0 and only include enabled haul types
+  useEffect(() => {
+    const { short, medium, long } = formData.haul_weighting;
+    const { short: shortEnabled, medium: mediumEnabled, long: longEnabled } = formData.haul_preferences;
+    
+    // Only normalize if at least one haul type is enabled
+    if (shortEnabled || mediumEnabled || longEnabled) {
+      // Calculate total only for enabled haul types
+      let total = 0;
+      if (shortEnabled) total += short;
+      if (mediumEnabled) total += medium;
+      if (longEnabled) total += long;
+      
+      if (total !== 1.0 && total > 0) {
+        setFormData((prev: ScheduleConfig) => ({
+          ...prev,
+          haul_weighting: {
+            short: shortEnabled ? short / total : 0,
+            medium: mediumEnabled ? medium / total : 0,
+            long: longEnabled ? long / total : 0,
+          },
+        }));
+      }
+    }
+  }, [
+    formData.haul_weighting.short, 
+    formData.haul_weighting.medium, 
+    formData.haul_weighting.long,
+    formData.haul_preferences.short,
+    formData.haul_preferences.medium,
+    formData.haul_preferences.long
   ]);
 
   // Handle form field changes
@@ -202,12 +245,21 @@ export default function NewSchedulePage() {
 
     try {
       // Basic validation
-      if (!formData.airline_id) {
+      if (!formData.airline_id || formData.airline_id === 0) {
         throw new Error("Please select an airline");
+      }
+
+      if (!formData.airline_name) {
+        throw new Error("Please select a valid airline");
       }
 
       if (!formData.start_airport) {
         throw new Error("Please select a start airport");
+      }
+
+      // Validate airport format (should be 3-letter IATA code)
+      if (!/^[A-Z]{3}$/.test(formData.start_airport)) {
+        throw new Error("Please select a valid airport (3-letter IATA code)");
       }
 
       if (formData.days < 1 || formData.days > 30) {
@@ -220,6 +272,28 @@ export default function NewSchedulePage() {
         !formData.haul_preferences.long
       ) {
         throw new Error("At least one haul type must be enabled");
+      }
+
+      // Validate operating hours
+      const startTime = new Date(`2000-01-01T${formData.operating_hours.start}`);
+      const endTime = new Date(`2000-01-01T${formData.operating_hours.end}`);
+      if (endTime <= startTime) {
+        throw new Error("Operating hours end time must be after start time");
+      }
+
+      // Validate minimum rest hours
+      if (formData.minimum_rest_hours_between_long_haul < 6 || formData.minimum_rest_hours_between_long_haul > 24) {
+        throw new Error("Minimum rest hours must be between 6 and 24 hours");
+      }
+
+      // Validate turnaround time
+      if (formData.turnaround_time_minutes < 30 || formData.turnaround_time_minutes > 180) {
+        throw new Error("Turnaround time must be between 30 and 180 minutes");
+      }
+
+      // Validate single leg day ratio
+      if (formData.prefer_single_leg_day_ratio < 0 || formData.prefer_single_leg_day_ratio > 1) {
+        throw new Error("Single leg day ratio must be between 0 and 1");
       }
 
       // Prepare the request payload
@@ -259,23 +333,40 @@ export default function NewSchedulePage() {
       const result = await generateSchedule(requestPayload);
 
       if (result.status === "success" && result.schedule) {
-        // Save the schedule to local storage
-        saveSchedule(result.schedule);
+        try {
+          // Save the schedule to local storage
+          saveSchedule(result.schedule);
 
-        // Navigate back to schedule page
-        router.push("/schedule");
+          // Navigate back to schedule page
+          router.push("/schedule");
+        } catch (storageError) {
+          console.error("Failed to save schedule:", storageError);
+          setError("Schedule generated successfully but failed to save. Please try again.");
+        }
       } else {
         throw new Error(result.message || "Failed to generate schedule");
       }
-    } catch (err: any) {
-      console.error("Error generating schedule:", err);
-      setError(
-        err.message || "An error occurred while generating the schedule"
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+          } catch (err: any) {
+        console.error("Error generating schedule:", err);
+        
+        // Handle specific API errors
+        if (err.response?.status === 400) {
+          setError(err.response.data?.message || "Invalid configuration. Please check your settings.");
+        } else if (err.response?.status === 404) {
+          setError("Airline not found. Please select a different airline.");
+        } else if (err.response?.status === 500) {
+          setError("Server error. Please try again later.");
+        } else if (err.code === "NETWORK_ERROR") {
+          setError("Network error. Please check your connection and try again.");
+        } else {
+          setError(
+            err.message || "An error occurred while generating the schedule"
+          );
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    };
 
   return (
     <div>
@@ -694,13 +785,13 @@ export default function NewSchedulePage() {
           </Link>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || loading}
             className="flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generating...
+                Generating Schedule...
               </>
             ) : (
               <>

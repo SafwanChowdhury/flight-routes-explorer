@@ -13,25 +13,37 @@ function calculateExpirationDate(days: number): string {
 export function saveSchedule(schedule: GeneratedSchedule): void {
   if (typeof window === 'undefined') return;
   
-  const cachedSchedule: CachedSchedule = {
-    schedule,
-    createdAt: new Date().toISOString(),
-    expiresAt: calculateExpirationDate(schedule.days.length),
-    days: schedule.days.length
-  };
-  
-  localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(cachedSchedule));
+  try {
+    const cachedSchedule: CachedSchedule = {
+      schedule,
+      createdAt: new Date().toISOString(),
+      expiresAt: calculateExpirationDate(schedule.days.length),
+      days: schedule.days.length
+    };
+    
+    localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(cachedSchedule));
+  } catch (error) {
+    console.error('Failed to save schedule to localStorage:', error);
+    throw new Error('Failed to save schedule. Please check your browser storage settings.');
+  }
 }
 
 // Get schedule from localStorage
 export function getSchedule(): CachedSchedule | null {
   if (typeof window === 'undefined') return null;
   
-  const storedSchedule = localStorage.getItem(SCHEDULE_STORAGE_KEY);
-  if (!storedSchedule) return null;
-  
   try {
+    const storedSchedule = localStorage.getItem(SCHEDULE_STORAGE_KEY);
+    if (!storedSchedule) return null;
+    
     const cachedSchedule: CachedSchedule = JSON.parse(storedSchedule);
+    
+    // Validate the cached schedule structure
+    if (!cachedSchedule.schedule || !cachedSchedule.schedule.days) {
+      console.error('Invalid schedule structure in localStorage');
+      return null;
+    }
+    
     return cachedSchedule;
   } catch (error) {
     console.error('Error parsing stored schedule:', error);
