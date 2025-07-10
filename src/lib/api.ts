@@ -22,8 +22,13 @@ export async function getAirports(params = {}) {
 }
 
 export async function getAirlines() {
-  const { data } = await api.get('/airlines');
-  return data;
+  try {
+    const { data } = await api.get('/airlines');
+    return data;
+  } catch (error: any) {
+    console.error('Failed to fetch airlines:', error);
+    throw error;
+  }
 }
 
 export async function getCountries() {
@@ -58,6 +63,11 @@ export async function validateScheduleConfig(config: any) {
 }
 
 export async function generateSchedule(config: any) {
-  const { data } = await scheduleApi.post('/generate', config);
-  return data;
+  try {
+    const { data } = await scheduleApi.post('/generate', config);
+    return data;
+  } catch (error: any) {
+    console.error('Schedule generation error:', error);
+    throw error;
+  }
 }

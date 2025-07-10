@@ -19,31 +19,36 @@ export default function ScheduleCalendar() {
 
   // Load flights for the current day
   useEffect(() => {
-    const cachedSchedule = getSchedule();
-    if (!cachedSchedule) {
+    try {
+      const cachedSchedule = getSchedule();
+      if (!cachedSchedule) {
+        setFlights([]);
+        return;
+      }
+
+      // Format the date to match the API's date format (YYYY-MM-DD)
+      const formattedDate = currentDate.toISOString().split("T")[0];
+
+      // Find the day in the schedule that matches the requested date
+      const daySchedule = cachedSchedule.schedule.days.find((day) =>
+        day.date.startsWith(formattedDate)
+      );
+
+      if (!daySchedule) {
+        setFlights([]);
+      } else {
+        // Sort flights by departure time
+        const sortedFlights = [...daySchedule.legs].sort((a, b) => {
+          return (
+            new Date(a.departure_time).getTime() -
+            new Date(b.departure_time).getTime()
+          );
+        });
+        setFlights(sortedFlights);
+      }
+    } catch (error) {
+      console.error("Error loading flights:", error);
       setFlights([]);
-      return;
-    }
-
-    // Format the date to match the API's date format (YYYY-MM-DD)
-    const formattedDate = currentDate.toISOString().split("T")[0];
-
-    // Find the day in the schedule that matches the requested date
-    const daySchedule = cachedSchedule.schedule.days.find((day) =>
-      day.date.startsWith(formattedDate)
-    );
-
-    if (!daySchedule) {
-      setFlights([]);
-    } else {
-      // Sort flights by departure time
-      const sortedFlights = [...daySchedule.legs].sort((a, b) => {
-        return (
-          new Date(a.departure_time).getTime() -
-          new Date(b.departure_time).getTime()
-        );
-      });
-      setFlights(sortedFlights);
     }
   }, [currentDate]);
 

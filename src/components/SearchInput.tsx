@@ -39,6 +39,11 @@ export default function SearchInput({
         const response = await fetch(
           `/api/search?q=${encodeURIComponent(query)}`
         );
+        
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.status}`);
+        }
+        
         const data = await response.json();
         setResults(data.results || []);
       } catch (error) {
