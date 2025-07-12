@@ -10,9 +10,14 @@ import {
 import { FlightLeg, DaySchedule } from "@/types/schedule";
 import { getSchedule } from "@/lib/scheduleStorage";
 import ScheduledFlightPopup from "./ScheduledFlightPopup";
-import DayScheduleInfo from "./DayScheduleInfo";
 
-export default function ScheduleCalendar() {
+interface ScheduleCalendarProps {
+  onDayScheduleChange?: (daySchedule: DaySchedule | null) => void;
+}
+
+export default function ScheduleCalendar({
+  onDayScheduleChange,
+}: ScheduleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [flights, setFlights] = useState<FlightLeg[]>([]);
   const [selectedFlight, setSelectedFlight] = useState<FlightLeg | null>(null);
@@ -41,6 +46,7 @@ export default function ScheduleCalendar() {
       if (!daySchedule) {
         setFlights([]);
         setCurrentDaySchedule(null);
+        onDayScheduleChange?.(null);
       } else {
         // Sort flights by departure time
         const sortedFlights = [...daySchedule.legs].sort((a, b) => {
@@ -51,6 +57,7 @@ export default function ScheduleCalendar() {
         });
         setFlights(sortedFlights);
         setCurrentDaySchedule(daySchedule);
+        onDayScheduleChange?.(daySchedule);
       }
     } catch (error) {
       console.error("Error loading flights:", error);
@@ -130,11 +137,6 @@ export default function ScheduleCalendar() {
 
   return (
     <div className="space-y-6">
-      {/* Day Schedule Information */}
-      {currentDaySchedule && (
-        <DayScheduleInfo daySchedule={currentDaySchedule} />
-      )}
-
       {/* Calendar View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         {/* Calendar Header */}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Clock, Calendar, Plus, Plane } from "lucide-react";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleSummary from "@/components/ScheduleSummary";
+import DayScheduleInfo from "@/components/DayScheduleInfo";
 import { getSchedule, isScheduleValid } from "@/lib/scheduleStorage";
 import { GeneratedSchedule } from "@/types/schedule";
 
@@ -13,6 +14,7 @@ export default function SchedulePage() {
   const [schedule, setSchedule] = useState<GeneratedSchedule | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentDaySchedule, setCurrentDaySchedule] = useState<any>(null);
 
   useEffect(() => {
     // Check if we have a valid schedule in storage
@@ -80,7 +82,10 @@ export default function SchedulePage() {
       ) : (
         <div className="space-y-6">
           <ScheduleSummary schedule={schedule} />
-          <ScheduleCalendar />
+          <ScheduleCalendar onDayScheduleChange={setCurrentDaySchedule} />
+          {currentDaySchedule && (
+            <DayScheduleInfo daySchedule={currentDaySchedule} />
+          )}
         </div>
       )}
     </div>
