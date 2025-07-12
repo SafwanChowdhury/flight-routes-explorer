@@ -6,7 +6,11 @@ import { Clock, Calendar, Plus, Plane } from "lucide-react";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleSummary from "@/components/ScheduleSummary";
 import DayScheduleInfo from "@/components/DayScheduleInfo";
-import { getSchedule, isScheduleValid } from "@/lib/scheduleStorage";
+import {
+  getSchedule,
+  isScheduleValid,
+  clearSchedule,
+} from "@/lib/scheduleStorage";
 import { GeneratedSchedule } from "@/types/schedule";
 
 export default function SchedulePage() {
@@ -32,6 +36,13 @@ export default function SchedulePage() {
   }, []);
 
   const handleNewSchedule = () => {
+    // Clear the current schedule from cache
+    clearSchedule();
+    // Reset the current state
+    setSchedule(null);
+    setIsValid(false);
+    setCurrentDaySchedule(null);
+    // Navigate to the new schedule page
     router.push("/schedule/new");
   };
 
