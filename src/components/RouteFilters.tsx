@@ -19,6 +19,7 @@ interface RouteFiltersProps {
     arrival_country: string;
     max_duration: string;
     min_duration: string;
+    exclude_base_airport: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -29,11 +30,13 @@ interface RouteFiltersProps {
       arrival_country: string;
       max_duration: string;
       min_duration: string;
+      exclude_base_airport: string;
     }>
   >;
   durationRange: [number, number];
   setDurationRange: React.Dispatch<React.SetStateAction<[number, number]>>;
   biDirectionalMessage: string | null;
+  excludeBaseAirportMessage: string | null;
 }
 
 // Duration range constants
@@ -48,6 +51,7 @@ export default function RouteFilters({
   durationRange,
   setDurationRange,
   biDirectionalMessage,
+  excludeBaseAirportMessage,
 }: RouteFiltersProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -93,6 +97,19 @@ export default function RouteFilters({
         </div>
       )}
 
+      {/* Exclude base airport filter message */}
+      {excludeBaseAirportMessage && (
+        <div className="p-4 mb-4 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-md flex justify-between items-center">
+          <span>{excludeBaseAirportMessage}</span>
+          <button
+            onClick={onClearFilters}
+            className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium"
+          >
+            Clear Filter
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -114,14 +131,38 @@ export default function RouteFilters({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               From
             </label>
-            <SearchInput
-              value={filters.departure_iata}
-              onChange={(value) =>
-                setFilters((prev) => ({ ...prev, departure_iata: value }))
-              }
-              placeholder="Search airport or city..."
-              onSelect={handleAirportSelect("departure_iata")}
-            />
+            <div className="flex items-center space-x-2">
+              <SearchInput
+                value={filters.departure_iata}
+                onChange={(value) =>
+                  setFilters((prev) => ({ ...prev, departure_iata: value }))
+                }
+                placeholder="Search airport or city..."
+                onSelect={handleAirportSelect("departure_iata")}
+              />
+              {filters.airline_name && filters.departure_iata && (
+                <label className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={filters.exclude_base_airport === "true"}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        exclude_base_airport: e.target.checked ? "true" : "",
+                      }))
+                    }
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-xs">Exclude as base</span>
+                </label>
+              )}
+            </div>
+            {filters.airline_name && filters.departure_iata && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Check to exclude routes that start or end at{" "}
+                {filters.departure_iata} for {filters.airline_name}
+              </p>
+            )}
           </div>
 
           <div>

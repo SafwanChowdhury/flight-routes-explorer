@@ -46,6 +46,13 @@ export async function getCountryRoutes(country: string, params = {}) {
   return data;
 }
 
+export async function getAirlineRoutesExcludeBase(airline: string, baseAirport: string, params = {}) {
+  const { data } = await api.get(`/airlines/${encodeURIComponent(airline)}/routes/exclude-base`, { 
+    params: { base_airport: baseAirport, ...params } 
+  });
+  return data;
+}
+
 // Schedule API functions
 export async function getScheduleAirlines() {
   const { data } = await scheduleApi.get('/airlines');

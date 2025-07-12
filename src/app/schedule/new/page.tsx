@@ -44,14 +44,11 @@ export default function NewSchedulePage() {
       medium: 0.3,
       long: 0.2,
     },
-    prefer_single_leg_day_ratio: 0.4,
+    prefer_single_leg_day_ratio: 0.5,
     operating_hours: {
       start: "06:00",
       end: "23:00",
     },
-    turnaround_time_minutes: 45,
-    preferred_countries: [],
-    preferred_regions: [],
     minimum_rest_hours_between_long_haul: 8,
     repetition_mode: false,
   });
@@ -72,7 +69,9 @@ export default function NewSchedulePage() {
         if (err.response?.status === 404) {
           setError("Airlines service not available. Please try again later.");
         } else if (err.code === "NETWORK_ERROR") {
-          setError("Network error. Please check your connection and try again.");
+          setError(
+            "Network error. Please check your connection and try again."
+          );
         } else {
           setError("Failed to load airlines. Please try again.");
         }
@@ -110,8 +109,12 @@ export default function NewSchedulePage() {
   // Normalize haul weighting to ensure they sum to 1.0 and only include enabled haul types
   useEffect(() => {
     const { short, medium, long } = formData.haul_weighting;
-    const { short: shortEnabled, medium: mediumEnabled, long: longEnabled } = formData.haul_preferences;
-    
+    const {
+      short: shortEnabled,
+      medium: mediumEnabled,
+      long: longEnabled,
+    } = formData.haul_preferences;
+
     // Only normalize if at least one haul type is enabled
     if (shortEnabled || mediumEnabled || longEnabled) {
       // Calculate total only for enabled haul types
@@ -119,7 +122,7 @@ export default function NewSchedulePage() {
       if (shortEnabled) total += short;
       if (mediumEnabled) total += medium;
       if (longEnabled) total += long;
-      
+
       if (total !== 1.0 && total > 0) {
         setFormData((prev: ScheduleConfig) => ({
           ...prev,
@@ -132,12 +135,12 @@ export default function NewSchedulePage() {
       }
     }
   }, [
-    formData.haul_weighting.short, 
-    formData.haul_weighting.medium, 
+    formData.haul_weighting.short,
+    formData.haul_weighting.medium,
     formData.haul_weighting.long,
     formData.haul_preferences.short,
     formData.haul_preferences.medium,
-    formData.haul_preferences.long
+    formData.haul_preferences.long,
   ]);
 
   // Handle form field changes
@@ -155,23 +158,12 @@ export default function NewSchedulePage() {
       }));
     } else if (
       name === "days" ||
-      name === "turnaround_time_minutes" ||
       name === "minimum_rest_hours_between_long_haul"
     ) {
       // Handle numeric fields
       setFormData((prev) => ({
         ...prev,
         [name]: parseInt(value),
-      }));
-    } else if (name === "preferred_countries" || name === "preferred_regions") {
-      // Handle comma-separated lists
-      const values = value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-      setFormData((prev) => ({
-        ...prev,
-        [name]: values,
       }));
     } else if (name.startsWith("haul_preferences.")) {
       // Handle haul preferences checkboxes properly
@@ -194,6 +186,12 @@ export default function NewSchedulePage() {
           ...prev.haul_weighting,
           [haulType]: parseFloat(value),
         },
+      }));
+    } else if (name === "prefer_single_leg_day_ratio") {
+      // Handle single leg day ratio as a number
+      setFormData((prev) => ({
+        ...prev,
+        prefer_single_leg_day_ratio: parseFloat(value),
       }));
     } else if (name.startsWith("operating_hours.")) {
       // Handle operating hours
@@ -275,24 +273,27 @@ export default function NewSchedulePage() {
       }
 
       // Validate operating hours
-      const startTime = new Date(`2000-01-01T${formData.operating_hours.start}`);
+      const startTime = new Date(
+        `2000-01-01T${formData.operating_hours.start}`
+      );
       const endTime = new Date(`2000-01-01T${formData.operating_hours.end}`);
       if (endTime <= startTime) {
         throw new Error("Operating hours end time must be after start time");
       }
 
       // Validate minimum rest hours
-      if (formData.minimum_rest_hours_between_long_haul < 6 || formData.minimum_rest_hours_between_long_haul > 24) {
+      if (
+        formData.minimum_rest_hours_between_long_haul < 6 ||
+        formData.minimum_rest_hours_between_long_haul > 24
+      ) {
         throw new Error("Minimum rest hours must be between 6 and 24 hours");
       }
 
-      // Validate turnaround time
-      if (formData.turnaround_time_minutes < 30 || formData.turnaround_time_minutes > 180) {
-        throw new Error("Turnaround time must be between 30 and 180 minutes");
-      }
-
       // Validate single leg day ratio
-      if (formData.prefer_single_leg_day_ratio < 0 || formData.prefer_single_leg_day_ratio > 1) {
+      if (
+        formData.prefer_single_leg_day_ratio < 0 ||
+        formData.prefer_single_leg_day_ratio > 1
+      ) {
         throw new Error("Single leg day ratio must be between 0 and 1");
       }
 
@@ -319,9 +320,6 @@ export default function NewSchedulePage() {
           start: formData.operating_hours.start,
           end: formData.operating_hours.end,
         },
-        turnaround_time_minutes: formData.turnaround_time_minutes,
-        preferred_countries: formData.preferred_countries,
-        preferred_regions: formData.preferred_regions,
         minimum_rest_hours_between_long_haul:
           formData.minimum_rest_hours_between_long_haul,
         repetition_mode: formData.repetition_mode,
@@ -341,32 +339,37 @@ export default function NewSchedulePage() {
           router.push("/schedule");
         } catch (storageError) {
           console.error("Failed to save schedule:", storageError);
-          setError("Schedule generated successfully but failed to save. Please try again.");
+          setError(
+            "Schedule generated successfully but failed to save. Please try again."
+          );
         }
       } else {
         throw new Error(result.message || "Failed to generate schedule");
       }
-          } catch (err: any) {
-        console.error("Error generating schedule:", err);
-        
-        // Handle specific API errors
-        if (err.response?.status === 400) {
-          setError(err.response.data?.message || "Invalid configuration. Please check your settings.");
-        } else if (err.response?.status === 404) {
-          setError("Airline not found. Please select a different airline.");
-        } else if (err.response?.status === 500) {
-          setError("Server error. Please try again later.");
-        } else if (err.code === "NETWORK_ERROR") {
-          setError("Network error. Please check your connection and try again.");
-        } else {
-          setError(
-            err.message || "An error occurred while generating the schedule"
-          );
-        }
-      } finally {
-        setSubmitting(false);
+    } catch (err: any) {
+      console.error("Error generating schedule:", err);
+
+      // Handle specific API errors
+      if (err.response?.status === 400) {
+        setError(
+          err.response.data?.message ||
+            "Invalid configuration. Please check your settings."
+        );
+      } else if (err.response?.status === 404) {
+        setError("Airline not found. Please select a different airline.");
+      } else if (err.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else if (err.code === "NETWORK_ERROR") {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(
+          err.message || "An error occurred while generating the schedule"
+        );
       }
-    };
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -622,28 +625,6 @@ export default function NewSchedulePage() {
 
             <div>
               <label
-                htmlFor="turnaround_time_minutes"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Turnaround Time (Minutes)
-              </label>
-              <input
-                type="number"
-                id="turnaround_time_minutes"
-                name="turnaround_time_minutes"
-                min="30"
-                max="180"
-                value={formData.turnaround_time_minutes}
-                onChange={handleInputChange}
-                className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Minimum time needed between consecutive flights (30-180 minutes)
-              </p>
-            </div>
-
-            <div>
-              <label
                 htmlFor="minimum_rest_hours_between_long_haul"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
@@ -663,58 +644,6 @@ export default function NewSchedulePage() {
           </div>
         </div>
 
-        {/* Destinations Preferences */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
-            <Globe className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
-            Destination Preferences
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="preferred_countries"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Preferred Countries
-              </label>
-              <input
-                type="text"
-                id="preferred_countries"
-                name="preferred_countries"
-                value={formData.preferred_countries.join(", ")}
-                onChange={handleInputChange}
-                placeholder="e.g. France, Italy, Spain"
-                className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Comma-separated list of countries to favor in route selection
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="preferred_regions"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Preferred Regions
-              </label>
-              <input
-                type="text"
-                id="preferred_regions"
-                name="preferred_regions"
-                value={formData.preferred_regions.join(", ")}
-                onChange={handleInputChange}
-                placeholder="e.g. EU, AS, NA"
-                className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Comma-separated list of region codes (EU=Europe, AS=Asia, etc.)
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Advanced Options */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
@@ -729,7 +658,7 @@ export default function NewSchedulePage() {
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Single Destination Day Ratio:{" "}
-                {formData.prefer_single_leg_day_ratio.toFixed(1)}
+                {Number(formData.prefer_single_leg_day_ratio || 0).toFixed(1)}
               </label>
               <input
                 type="range"

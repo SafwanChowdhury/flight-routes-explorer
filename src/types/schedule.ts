@@ -25,9 +25,6 @@ export interface HaulPreferences {
     haul_weighting: HaulWeighting;
     prefer_single_leg_day_ratio: number;
     operating_hours: OperatingHours;
-    turnaround_time_minutes: number;
-    preferred_countries: string[];
-    preferred_regions: string[];
     minimum_rest_hours_between_long_haul: number;
     repetition_mode: boolean;
   }
@@ -40,13 +37,27 @@ export interface HaulPreferences {
     haul_type: 'short' | 'medium' | 'long';
     duration_min: number;
     route_id: number;
-    departure_city: string;
-    departure_country: string;
-    arrival_city: string;
-    arrival_country: string;
-    airline_iata: string;
-    airline_name: string;
-    distance_km: number;
+    departure_city?: string;
+    departure_country?: string;
+    arrival_city?: string;
+    arrival_country?: string;
+    airline_iata?: string;
+    airline_name?: string;
+    distance_km?: number;
+  }
+
+  export interface FlightBlock {
+    origin_airport: string;
+    legs: FlightLeg[];
+    is_complete: boolean;
+    block_type: 'simple' | 'multi-stop';
+  }
+
+  export interface IncompleteBlock {
+    origin_airport: string;
+    completed_legs: FlightLeg[];
+    remaining_route: string[];
+    block_type: 'simple' | 'multi-stop';
   }
   
   export interface DaySchedule {
@@ -55,6 +66,8 @@ export interface HaulPreferences {
     legs: FlightLeg[];
     overnight_location: string;
     notes: string[];
+    completed_blocks: FlightBlock[];
+    incomplete_block?: IncompleteBlock;
   }
   
   export interface GeneratedSchedule {

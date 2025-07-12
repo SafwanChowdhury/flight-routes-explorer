@@ -55,10 +55,10 @@ export default function ScheduledFlightPopup({
                 Airline
               </h4>
               <p className="mt-1 text-lg text-gray-900 dark:text-gray-100">
-                {flight.airline_name}
+                {flight.airline_name || "N/A"}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                IATA: {flight.airline_iata}
+                IATA: {flight.airline_iata || "N/A"}
               </p>
             </div>
 
@@ -102,7 +102,9 @@ export default function ScheduledFlightPopup({
                   {flight.departure_airport}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {flight.departure_city}, {flight.departure_country}
+                  {flight.departure_city && flight.departure_country
+                    ? `${flight.departure_city}, ${flight.departure_country}`
+                    : "N/A"}
                 </p>
                 <p className="text-sm font-semibold mt-1 text-gray-700 dark:text-gray-300">
                   {formatTime(flight.departure_time)}
@@ -117,7 +119,9 @@ export default function ScheduledFlightPopup({
                   {flight.arrival_airport}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {flight.arrival_city}, {flight.arrival_country}
+                  {flight.arrival_city && flight.arrival_country
+                    ? `${flight.arrival_city}, ${flight.arrival_country}`
+                    : "N/A"}
                 </p>
                 <p className="text-sm font-semibold mt-1 text-gray-700 dark:text-gray-300">
                   {formatTime(flight.arrival_time)}
@@ -132,7 +136,9 @@ export default function ScheduledFlightPopup({
                 Distance
               </h4>
               <p className="mt-1 text-lg text-gray-900 dark:text-gray-100">
-                {flight.distance_km.toLocaleString()} km
+                {flight.distance_km
+                  ? `${flight.distance_km.toLocaleString()} km`
+                  : "N/A"}
               </p>
             </div>
 
@@ -150,7 +156,7 @@ export default function ScheduledFlightPopup({
             <SimBriefButton
               origin={flight.departure_airport}
               destination={flight.arrival_airport}
-              airline={flight.airline_iata}
+              airline={flight.airline_iata || ""}
             />
           </div>
         </div>

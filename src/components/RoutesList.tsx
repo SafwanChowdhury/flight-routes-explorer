@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { getRoutes } from "@/lib/api";
+import { getRoutes, getAirlineRoutesExcludeBase } from "@/lib/api";
 import RouteFilters from "./RouteFilters";
 import RouteDetailsPopup from "./RouteDetailsPopup";
 
@@ -55,6 +55,7 @@ export default function RoutesList() {
     arrival_country: searchParams.get("arrival_country") || "",
     max_duration: searchParams.get("max_duration") || MAX_DURATION.toString(),
     min_duration: searchParams.get("min_duration") || MIN_DURATION.toString(),
+    exclude_base_airport: searchParams.get("exclude_base_airport") || "",
   });
 
   // State for the dual range slider
@@ -202,6 +203,31 @@ export default function RoutesList() {
     setError(null);
 
     try {
+      // Check if we should use the exclude base airport endpoint
+      if (
+        filters.airline_name &&
+        filters.departure_iata &&
+        filters.exclude_base_airport === "true"
+      ) {
+        const params = {
+          limit: pagination.limit,
+          offset: pagination.offset,
+        };
+
+        const data = await getAirlineRoutesExcludeBase(
+          filters.airline_name,
+          filters.departure_iata, // Use departure airport as base airport
+          params
+        );
+
+        setRoutes(data.routes);
+        setPagination((prev) => ({
+          ...prev,
+          total: data.total || data.routes.length,
+        }));
+        return;
+      }
+
       const params = Object.fromEntries(
         Object.entries({
           ...filters,
@@ -259,6 +285,7 @@ export default function RoutesList() {
       arrival_country: "",
       max_duration: MAX_DURATION.toString(),
       min_duration: MIN_DURATION.toString(),
+      exclude_base_airport: "",
     });
 
     setDurationRange([MIN_DURATION, MAX_DURATION]);
@@ -279,6 +306,18 @@ export default function RoutesList() {
       return `Showing all routes for airport: ${airport_iata} (as origin or destination)`;
     } else if (biDirectionalMode.country && country) {
       return `Showing all routes for country: ${country} (as origin or destination)`;
+    }
+    return null;
+  };
+
+  // Calculate display message for exclude base airport mode
+  const getExcludeBaseAirportMessage = () => {
+    if (
+      filters.airline_name &&
+      filters.departure_iata &&
+      filters.exclude_base_airport === "true"
+    ) {
+      return `Showing ${filters.airline_name} routes excluding ${filters.departure_iata} as base airport`;
     }
     return null;
   };
@@ -308,6 +347,7 @@ export default function RoutesList() {
         durationRange={durationRange}
         setDurationRange={setDurationRange}
         biDirectionalMessage={getBiDirectionalMessage()}
+        excludeBaseAirportMessage={getExcludeBaseAirportMessage()}
       />
 
       {/* Error message */}
