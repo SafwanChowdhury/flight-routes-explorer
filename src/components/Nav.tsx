@@ -2,13 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plane, MapPin, Search, Globe, Calendar } from "lucide-react";
+import {
+  Plane,
+  MapPin,
+  Search,
+  Globe,
+  Calendar,
+  Route,
+  RotateCcw,
+} from "lucide-react";
 
 export default function Nav() {
   const pathname = usePathname();
 
   const navItems = [
     { href: "/", icon: <Plane className="h-5 w-5" />, label: "Routes" },
+    {
+      href: "/circular-routes",
+      icon: <RotateCcw className="h-5 w-5" />,
+      label: "Circular Routes",
+    },
     {
       href: "/airports",
       icon: <MapPin className="h-5 w-5" />,

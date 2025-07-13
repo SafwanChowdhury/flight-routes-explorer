@@ -78,3 +78,14 @@ export async function generateSchedule(config: any) {
     throw error;
   }
 }
+
+// Circular routes API functions
+export async function getCircularRoutes(params = {}) {
+  const { data } = await api.get('/circular-routes', { params });
+  return data;
+}
+
+export async function getCircularRoutesAirlines(params = {}) {
+  const { data } = await api.get('/circular-routes/airlines', { params });
+  return data;
+}
