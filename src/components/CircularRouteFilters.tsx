@@ -18,6 +18,7 @@ interface CircularRouteFiltersProps {
     max_duration: string;
     min_duration: string;
     limit: string;
+    all: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -28,6 +29,7 @@ interface CircularRouteFiltersProps {
       max_duration: string;
       min_duration: string;
       limit: string;
+      all: string;
     }>
   >;
   durationRange: [number, number];
@@ -150,6 +152,7 @@ export default function CircularRouteFilters({
               onChange={handleInputChange}
               aria-label="Maximum results selection"
               className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              disabled={filters.all === "true"}
             >
               <option value="10">10 results</option>
               <option value="20">20 results</option>
@@ -158,6 +161,42 @@ export default function CircularRouteFilters({
               <option value="200">200 results</option>
             </select>
           </div>
+
+          {/* All Results Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Search Mode
+            </label>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="all"
+                  value="false"
+                  checked={filters.all === "false"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <span className="text-sm">Limited Results</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="all"
+                  value="true"
+                  checked={filters.all === "true"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <span className="text-sm">All Results</span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {filters.all === "true"
+                ? "Will return all available circular routes (may take longer)"
+                : "Will return limited results for faster search"}
+            </p>
+          </div>
         </div>
 
         {/* Duration Range Slider and Inputs */}
@@ -165,11 +204,15 @@ export default function CircularRouteFilters({
           <div className="flex items-center mb-2">
             <Clock className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-300" />
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Route Duration Range (Optional)
+              Total Route Duration Range (Optional)
             </label>
           </div>
 
           <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Filter by the total duration of the complete circular route (sum
+              of all segments)
+            </p>
             {/* Text inputs for duration */}
             <div className="flex items-center justify-between mb-4">
               <div className="w-1/3">

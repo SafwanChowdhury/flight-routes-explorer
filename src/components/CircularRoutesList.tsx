@@ -53,17 +53,25 @@ export default function CircularRoutesList() {
     max_duration: searchParams.get("max_duration") || "",
     min_duration: searchParams.get("min_duration") || "",
     limit: searchParams.get("limit") || "20",
+    all: searchParams.get("all") || "false",
   });
 
   // Duration range constants
   const MIN_DURATION = 0;
   const MAX_DURATION = 1440; // 24 hours in minutes
 
-  // State for the dual range slider
+  // State for the dual range slider - initialize from URL params
   const [durationRange, setDurationRange] = useState<[number, number]>([
     parseInt(filters.min_duration) || MIN_DURATION,
     parseInt(filters.max_duration) || MAX_DURATION,
   ]);
+
+  // Update duration range when filters change (e.g., from URL params)
+  useEffect(() => {
+    const minDuration = parseInt(filters.min_duration) || MIN_DURATION;
+    const maxDuration = parseInt(filters.max_duration) || MAX_DURATION;
+    setDurationRange([minDuration, maxDuration]);
+  }, [filters.min_duration, filters.max_duration]);
 
   const loadCircularRoutes = async () => {
     setLoading(true);
@@ -91,16 +99,21 @@ export default function CircularRoutesList() {
         params.pattern_type = filters.pattern_type;
       }
 
-      if (filters.max_duration) {
-        params.max_duration = filters.max_duration;
+      // Use duration range values for filtering
+      if (durationRange[1] < MAX_DURATION) {
+        params.max_duration = durationRange[1].toString();
       }
 
-      if (filters.min_duration) {
-        params.min_duration = filters.min_duration;
+      if (durationRange[0] > MIN_DURATION) {
+        params.min_duration = durationRange[0].toString();
       }
 
       if (filters.limit) {
         params.limit = filters.limit;
+      }
+
+      if (filters.all) {
+        params.all = filters.all;
       }
 
       const data = await getCircularRoutes(params);
@@ -114,15 +127,20 @@ export default function CircularRoutesList() {
   };
 
   const applyFilters = () => {
+    // Update filters state with current duration range
+    const updatedFilters = {
+      ...filters,
+      min_duration: durationRange[0].toString(),
+      max_duration: durationRange[1].toString(),
+    };
+    setFilters(updatedFilters);
+
     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(updatedFilters).forEach(([key, value]) => {
       if (value) {
         params.set(key, value);
       }
     });
-
-    params.set("min_duration", durationRange[0].toString());
-    params.set("max_duration", durationRange[1].toString());
 
     const url = params.toString()
       ? `/circular-routes?${params.toString()}`
@@ -133,7 +151,7 @@ export default function CircularRoutesList() {
   };
 
   const clearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       airline_name: "",
       airline_id: "",
       start_airport: "",
@@ -141,7 +159,9 @@ export default function CircularRoutesList() {
       max_duration: "",
       min_duration: "",
       limit: "20",
-    });
+      all: "false",
+    };
+    setFilters(clearedFilters);
 
     setDurationRange([MIN_DURATION, MAX_DURATION]);
     router.push("/circular-routes", { scroll: false });
