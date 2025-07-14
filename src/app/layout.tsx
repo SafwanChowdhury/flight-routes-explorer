@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Nav from "@/components/Nav";
+import { ToastProvider } from "@/components/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,14 +42,16 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${inter.className} min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 dark:text-gray-100`}
       >
-        <Header />
-        <Nav />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
-        </main>
-        <footer className="bg-gray-100 p-2 text-center text-gray-600 text-sm dark:bg-gray-800 dark:text-gray-400">
-          Flight Routes API Explorer
-        </footer>
+        <ToastProvider>
+          <Header />
+          <Nav />
+          <main className="flex-grow container mx-auto px-4 py-8">
+            {children}
+          </main>
+          <footer className="bg-gray-100 p-2 text-center text-gray-600 text-sm dark:bg-gray-800 dark:text-gray-400">
+            Flight Routes API Explorer
+          </footer>
+        </ToastProvider>
       </body>
     </html>
   );

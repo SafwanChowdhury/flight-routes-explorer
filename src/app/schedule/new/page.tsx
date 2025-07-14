@@ -20,12 +20,12 @@ import SearchInput from "@/components/SearchInput";
 import { getAirlines, generateSchedule } from "@/lib/api";
 import { ScheduleConfig } from "@/types/schedule";
 import { saveSchedule } from "@/lib/scheduleStorage";
+import { useToast } from "@/components/ToastProvider";
 
 export default function NewSchedulePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [airlines, setAirlines] = useState<any[]>([]);
 
   // Initialize form state
@@ -53,6 +53,8 @@ export default function NewSchedulePage() {
     repetition_mode: false,
   });
 
+  const { showToast } = useToast();
+
   // Load airlines data
   useEffect(() => {
     const loadAirlines = async () => {
@@ -62,18 +64,18 @@ export default function NewSchedulePage() {
         if (data.airlines && data.airlines.length > 0) {
           setAirlines(data.airlines);
         } else {
-          setError("No airlines available. Please try again later.");
+          showToast("No airlines available. Please try again later.");
         }
       } catch (err: any) {
         console.error("Failed to load airlines:", err);
         if (err.response?.status === 404) {
-          setError("Airlines service not available. Please try again later.");
+          showToast("Airlines service not available. Please try again later.");
         } else if (err.code === "NETWORK_ERROR") {
-          setError(
+          showToast(
             "Network error. Please check your connection and try again."
           );
         } else {
-          setError("Failed to load airlines. Please try again.");
+          showToast("Failed to load airlines. Please try again.");
         }
       } finally {
         setLoading(false);
@@ -239,7 +241,6 @@ export default function NewSchedulePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
 
     try {
       // Basic validation
@@ -339,7 +340,7 @@ export default function NewSchedulePage() {
           router.push("/schedule");
         } catch (storageError) {
           console.error("Failed to save schedule:", storageError);
-          setError(
+          showToast(
             "Schedule generated successfully but failed to save. Please try again."
           );
         }
@@ -351,18 +352,18 @@ export default function NewSchedulePage() {
 
       // Handle specific API errors
       if (err.response?.status === 400) {
-        setError(
+        showToast(
           err.response.data?.message ||
             "Invalid configuration. Please check your settings."
         );
       } else if (err.response?.status === 404) {
-        setError("Airline not found. Please select a different airline.");
+        showToast("Airline not found. Please select a different airline.");
       } else if (err.response?.status === 500) {
-        setError("Server error. Please try again later.");
+        showToast("Server error. Please try again later.");
       } else if (err.code === "NETWORK_ERROR") {
-        setError("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.");
       } else {
-        setError(
+        showToast(
           err.message || "An error occurred while generating the schedule"
         );
       }
@@ -384,12 +385,6 @@ export default function NewSchedulePage() {
           Build New Schedule
         </h1>
       </div>
-
-      {error && (
-        <div className="p-4 mb-6 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}

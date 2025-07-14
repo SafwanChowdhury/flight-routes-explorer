@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { Globe, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getCountries } from "@/lib/api";
+import { useToast } from "@/components/ToastProvider";
 
 export default function CountriesList() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadCountries();
@@ -17,13 +18,12 @@ export default function CountriesList() {
 
   const loadCountries = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       const data = await getCountries();
       setCountries(data.countries);
     } catch (err) {
-      setError("Failed to load countries");
+      showToast("Failed to load countries");
       console.error(err);
     } finally {
       setLoading(false);
@@ -45,13 +45,6 @@ export default function CountriesList() {
       <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Explore Countries
       </h2>
-
-      {/* Error message */}
-      {error && (
-        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
 
       {/* Loading indicator */}
       {loading ? (

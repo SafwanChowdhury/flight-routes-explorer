@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { getRoutes, getAirlineRoutesExcludeBase } from "@/lib/api";
 import RouteFilters from "./RouteFilters";
 import RouteDetailsPopup from "./RouteDetailsPopup";
+import { useToast } from "@/components/ToastProvider";
 
 // Define a type for route objects
 interface Route {
@@ -26,10 +27,10 @@ interface Route {
 export default function RoutesList() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [pagination, setPagination] = useState({
     offset: 0,
@@ -109,7 +110,6 @@ export default function RoutesList() {
 
   const loadRoutesWithParams = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       let allRoutes: Route[] = [];
@@ -191,7 +191,7 @@ export default function RoutesList() {
         total: allRoutes.length,
       }));
     } catch (err) {
-      setError("Failed to load routes");
+      showToast("Failed to load routes");
       console.error(err);
     } finally {
       setLoading(false);
@@ -200,7 +200,6 @@ export default function RoutesList() {
 
   const loadRoutes = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       // Check if we should use the exclude base airport endpoint
@@ -245,7 +244,7 @@ export default function RoutesList() {
         total: data.pagination.total,
       }));
     } catch (err) {
-      setError("Failed to load routes");
+      showToast("Failed to load routes");
       console.error(err);
     } finally {
       setLoading(false);
@@ -351,11 +350,7 @@ export default function RoutesList() {
       />
 
       {/* Error message */}
-      {error && (
-        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
+      {/* Removed error message div */}
 
       {/* Loading indicator */}
       {loading ? (

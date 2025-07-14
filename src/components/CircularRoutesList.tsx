@@ -6,6 +6,7 @@ import { ArrowRight, Search } from "lucide-react";
 import { getCircularRoutes } from "@/lib/api";
 import CircularRouteFilters from "./CircularRouteFilters";
 import SimBriefButton from "./SimBriefButton";
+import { useToast } from "@/components/ToastProvider";
 
 // Define a type for circular route objects
 interface CircularRoute {
@@ -40,7 +41,6 @@ export default function CircularRoutesList() {
 
   const [routes, setRoutes] = useState<CircularRoute[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<CircularRoute | null>(
     null
   );
@@ -52,6 +52,8 @@ export default function CircularRoutesList() {
     [segmentIndex: number]: boolean;
   }>({});
 
+  const { showToast } = useToast();
+
   useEffect(() => {
     // Load aircraft data for dropdown
     fetch("/aircraft.json")
@@ -60,7 +62,7 @@ export default function CircularRoutesList() {
         setAircraftList(data.aircraft);
       })
       .catch((error) => {
-        console.error("Error loading aircraft data:", error);
+        showToast("Error loading aircraft data");
       });
   }, []);
 
@@ -121,7 +123,6 @@ export default function CircularRoutesList() {
 
   const loadCircularRoutes = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       // Build parameters for the API call
@@ -132,7 +133,7 @@ export default function CircularRoutesList() {
       } else if (filters.airline_name) {
         params.airline_name = filters.airline_name;
       } else {
-        setError("Airline selection is required");
+        showToast("Airline selection is required");
         setLoading(false);
         return;
       }
@@ -169,7 +170,7 @@ export default function CircularRoutesList() {
       const data = await getCircularRoutes(params);
       setRoutes(data.results || []);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load circular routes");
+      showToast(err.response?.data?.error || "Failed to load circular routes");
       console.error(err);
     } finally {
       setLoading(false);
@@ -250,13 +251,6 @@ export default function CircularRoutesList() {
       />
 
       {/* Error message */}
-      {error && (
-        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
-
-      {/* Loading indicator */}
       {loading ? (
         <div className="text-center p-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent"></div>

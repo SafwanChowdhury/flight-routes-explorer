@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 interface SimBriefButtonProps {
   origin: string;
@@ -28,6 +29,7 @@ export default function SimBriefButton({
   const [airlineICAO, setAirlineICAO] = useState(airline);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
   const [selectedAircraft, setSelectedAircraft] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Only run on client side
@@ -53,7 +55,7 @@ export default function SimBriefButton({
   const handleSimBriefClick = () => {
     const aircraftToUse = type !== undefined ? type : selectedAircraft;
     if (!aircraftToUse) {
-      alert("Please select an aircraft");
+      showToast("Please select an aircraft");
       return;
     }
 
