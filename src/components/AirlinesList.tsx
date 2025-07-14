@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAirlines } from "@/lib/api";
 import AirlineSearchInput from "./AirlineSearchInput";
+import { useToast } from "@/components/ToastProvider";
 
 export default function AirlinesList() {
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadAirlines();
@@ -18,13 +19,12 @@ export default function AirlinesList() {
 
   const loadAirlines = async () => {
     setLoading(true);
-    setError(null);
 
     try {
       const data = await getAirlines();
       setAirlines(data.airlines);
     } catch (err) {
-      setError("Failed to load airlines");
+      showToast("Failed to load airlines");
       console.error(err);
     } finally {
       setLoading(false);
@@ -66,13 +66,6 @@ export default function AirlinesList() {
           onSelect={handleAirlineSelect}
         />
       </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
 
       {/* Loading indicator */}
       {loading ? (

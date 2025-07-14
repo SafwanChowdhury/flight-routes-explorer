@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Filter, RefreshCw, Clock, Search } from "lucide-react";
-import RangeSlider from "react-range-slider-input";
-import "react-range-slider-input/dist/style.css";
+import Slider from "@mui/material/Slider";
 import SearchInput from "./SearchInput";
 import AirlineSearchInput from "./AirlineSearchInput";
 
@@ -19,6 +18,7 @@ interface CircularRouteFiltersProps {
     min_duration: string;
     limit: string;
     all: string;
+    contains_airport: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -30,6 +30,7 @@ interface CircularRouteFiltersProps {
       min_duration: string;
       limit: string;
       all: string;
+      contains_airport: string;
     }>
   >;
   durationRange: [number, number];
@@ -38,7 +39,7 @@ interface CircularRouteFiltersProps {
 
 // Duration range constants
 const MIN_DURATION = 0;
-const MAX_DURATION = 1440; // 24 hours in minutes
+const MAX_DURATION = 4320; // 3 days in minutes
 
 export default function CircularRouteFilters({
   onApplyFilters,
@@ -61,6 +62,10 @@ export default function CircularRouteFilters({
 
   const handleAirportSelect = (result: any) => {
     setFilters((prev) => ({ ...prev, start_airport: result.iata }));
+  };
+
+  const handleContainsAirportSelect = (result: any) => {
+    setFilters((prev) => ({ ...prev, contains_airport: result.iata }));
   };
 
   const handleAirlineSelect = (result: any) => {
@@ -120,6 +125,24 @@ export default function CircularRouteFilters({
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Leave empty to search from all airports
+            </p>
+          </div>
+
+          {/* Contains Airport */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Contains Airport (IATA or Name)
+            </label>
+            <SearchInput
+              value={filters.contains_airport}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, contains_airport: value }))
+              }
+              placeholder="e.g. LHR or Heathrow"
+              onSelect={handleContainsAirportSelect}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Show only routes that include this airport anywhere in the pattern
             </p>
           </div>
 
@@ -268,23 +291,65 @@ export default function CircularRouteFilters({
 
             {/* Range Slider Component */}
             <div className="py-2">
-              <RangeSlider
+              <Slider
                 min={MIN_DURATION}
                 max={MAX_DURATION}
                 step={5}
                 value={durationRange}
-                onInput={handleDurationRangeChange}
-                className="custom-range-slider"
+                onChange={(_, value) =>
+                  handleDurationRangeChange(value as [number, number])
+                }
+                valueLabelDisplay="off"
+                disableSwap
+                marks={[
+                  { value: 0, label: "0h" },
+                  { value: 720, label: "12h" },
+                  { value: 1440, label: "24h" },
+                  { value: 2160, label: "36h" },
+                  { value: 2880, label: "48h" },
+                  { value: 3600, label: "60h" },
+                  { value: 4320, label: "72h" },
+                ]}
+                sx={{
+                  height: 10, // Increased from 6 to 10 for a wider track
+                  color: "#3b82f6",
+                  "& .MuiSlider-rail": {
+                    color: "#e5e7eb",
+                    opacity: 1,
+                    height: 10, // Increased from 6 to 10
+                    borderRadius: 4,
+                  },
+                  "& .MuiSlider-track": {
+                    color: "#3b82f6",
+                    height: 10, // Increased from 6 to 10
+                    borderRadius: 4,
+                  },
+                  "& .MuiSlider-thumb": {
+                    width: 16,
+                    height: 16,
+                    backgroundColor: "white",
+                    border: "2px solid #3b82f6",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                    },
+                    "&:focus, &.Mui-active": {
+                      boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+                    },
+                  },
+                  // Dark mode support
+                  "@media (prefers-color-scheme: dark)": {
+                    color: "#3b82f6",
+                    "& .MuiSlider-rail": {
+                      color: "#4b5563",
+                    },
+                    "& .MuiSlider-thumb": {
+                      backgroundColor: "#1f2937",
+                      border: "2px solid #3b82f6",
+                    },
+                  },
+                }}
               />
-            </div>
-
-            {/* Duration markers */}
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>0h</span>
-              <span>6h</span>
-              <span>12h</span>
-              <span>18h</span>
-              <span>24h</span>
             </div>
           </div>
         </div>
@@ -307,39 +372,6 @@ export default function CircularRouteFilters({
           </button>
         </div>
       </div>
-
-      {/* Custom CSS for the range slider */}
-      <style jsx global>{`
-        .custom-range-slider .range-slider {
-          height: 6px;
-          background: #e5e7eb;
-          border-radius: 4px;
-        }
-
-        .dark .custom-range-slider .range-slider {
-          background: #4b5563;
-        }
-
-        .custom-range-slider .range-slider__range {
-          background: #3b82f6;
-          border-radius: 4px;
-        }
-
-        .custom-range-slider .range-slider__thumb {
-          background: white;
-          border: 2px solid #3b82f6;
-          width: 16px;
-          height: 16px;
-        }
-
-        .dark .custom-range-slider .range-slider__thumb {
-          background: #1f2937;
-        }
-
-        .custom-range-slider .range-slider__thumb:hover {
-          transform: scale(1.1);
-        }
-      `}</style>
     </div>
   );
 }

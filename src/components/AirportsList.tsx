@@ -5,6 +5,7 @@ import { MapPin, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getAirports } from "@/lib/api";
 import debounce from "lodash/debounce";
+import { useToast } from "@/components/ToastProvider";
 
 const CACHE_KEY = "airports_data";
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -28,7 +29,7 @@ export default function AirportsList() {
   const [allAirports, setAllAirports] = useState<Airport[]>([]);
   const [filteredAirports, setFilteredAirports] = useState<Airport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [filters, setFilters] = useState({
     country: "",
     continent: "",
@@ -39,7 +40,6 @@ export default function AirportsList() {
   useEffect(() => {
     const loadInitialAirports = async () => {
       setLoading(true);
-      setError(null);
 
       try {
         // Check cache first
@@ -69,7 +69,7 @@ export default function AirportsList() {
           })
         );
       } catch (err) {
-        setError("Failed to load airports");
+        showToast("Failed to load airports");
         console.error(err);
       } finally {
         setLoading(false);
@@ -147,13 +147,6 @@ export default function AirportsList() {
           </div>
         </div>
       </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="p-4 mb-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
 
       {/* Loading indicator */}
       {loading ? (

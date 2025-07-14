@@ -20,12 +20,13 @@ import SearchInput from "@/components/SearchInput";
 import { getAirlines, generateSchedule } from "@/lib/api";
 import { ScheduleConfig } from "@/types/schedule";
 import { saveSchedule } from "@/lib/scheduleStorage";
+import { useToast } from "@/components/ToastProvider";
+import Slider from "@mui/material/Slider";
 
 export default function NewSchedulePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [airlines, setAirlines] = useState<any[]>([]);
 
   // Initialize form state
@@ -53,6 +54,8 @@ export default function NewSchedulePage() {
     repetition_mode: false,
   });
 
+  const { showToast } = useToast();
+
   // Load airlines data
   useEffect(() => {
     const loadAirlines = async () => {
@@ -62,18 +65,18 @@ export default function NewSchedulePage() {
         if (data.airlines && data.airlines.length > 0) {
           setAirlines(data.airlines);
         } else {
-          setError("No airlines available. Please try again later.");
+          showToast("No airlines available. Please try again later.");
         }
       } catch (err: any) {
         console.error("Failed to load airlines:", err);
         if (err.response?.status === 404) {
-          setError("Airlines service not available. Please try again later.");
+          showToast("Airlines service not available. Please try again later.");
         } else if (err.code === "NETWORK_ERROR") {
-          setError(
+          showToast(
             "Network error. Please check your connection and try again."
           );
         } else {
-          setError("Failed to load airlines. Please try again.");
+          showToast("Failed to load airlines. Please try again.");
         }
       } finally {
         setLoading(false);
@@ -115,23 +118,32 @@ export default function NewSchedulePage() {
       long: longEnabled,
     } = formData.haul_preferences;
 
-    // Only normalize if at least one haul type is enabled
     if (shortEnabled || mediumEnabled || longEnabled) {
-      // Calculate total only for enabled haul types
       let total = 0;
       if (shortEnabled) total += short;
       if (mediumEnabled) total += medium;
       if (longEnabled) total += long;
 
       if (total !== 1.0 && total > 0) {
-        setFormData((prev: ScheduleConfig) => ({
-          ...prev,
-          haul_weighting: {
-            short: shortEnabled ? short / total : 0,
-            medium: mediumEnabled ? medium / total : 0,
-            long: longEnabled ? long / total : 0,
-          },
-        }));
+        const newShort = shortEnabled ? short / total : 0;
+        const newMedium = mediumEnabled ? medium / total : 0;
+        const newLong = longEnabled ? long / total : 0;
+
+        // Only update if values actually changed
+        if (
+          Math.abs(newShort - short) > 1e-6 ||
+          Math.abs(newMedium - medium) > 1e-6 ||
+          Math.abs(newLong - long) > 1e-6
+        ) {
+          setFormData((prev: ScheduleConfig) => ({
+            ...prev,
+            haul_weighting: {
+              short: newShort,
+              medium: newMedium,
+              long: newLong,
+            },
+          }));
+        }
       }
     }
   }, [
@@ -235,11 +247,39 @@ export default function NewSchedulePage() {
     }));
   };
 
+  // Handlers for MUI Sliders (haul weighting)
+  const handleShortHaulSlider = (_: Event, value: number | number[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      haul_weighting: {
+        ...prev.haul_weighting,
+        short: value as number,
+      },
+    }));
+  };
+  const handleMediumHaulSlider = (_: Event, value: number | number[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      haul_weighting: {
+        ...prev.haul_weighting,
+        medium: value as number,
+      },
+    }));
+  };
+  const handleLongHaulSlider = (_: Event, value: number | number[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      haul_weighting: {
+        ...prev.haul_weighting,
+        long: value as number,
+      },
+    }));
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
 
     try {
       // Basic validation
@@ -339,7 +379,7 @@ export default function NewSchedulePage() {
           router.push("/schedule");
         } catch (storageError) {
           console.error("Failed to save schedule:", storageError);
-          setError(
+          showToast(
             "Schedule generated successfully but failed to save. Please try again."
           );
         }
@@ -351,18 +391,18 @@ export default function NewSchedulePage() {
 
       // Handle specific API errors
       if (err.response?.status === 400) {
-        setError(
+        showToast(
           err.response.data?.message ||
             "Invalid configuration. Please check your settings."
         );
       } else if (err.response?.status === 404) {
-        setError("Airline not found. Please select a different airline.");
+        showToast("Airline not found. Please select a different airline.");
       } else if (err.response?.status === 500) {
-        setError("Server error. Please try again later.");
+        showToast("Server error. Please try again later.");
       } else if (err.code === "NETWORK_ERROR") {
-        setError("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.");
       } else {
-        setError(
+        showToast(
           err.message || "An error occurred while generating the schedule"
         );
       }
@@ -384,12 +424,6 @@ export default function NewSchedulePage() {
           Build New Schedule
         </h1>
       </div>
-
-      {error && (
-        <div className="p-4 mb-6 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -536,16 +570,50 @@ export default function NewSchedulePage() {
                   >
                     Short-haul: {formData.haul_weighting.short.toFixed(1)}
                   </label>
-                  <input
-                    type="range"
-                    id="haul_weighting.short"
-                    name="haul_weighting.short"
-                    min="0"
-                    max="1"
-                    step="0.1"
+                  <Slider
+                    min={0}
+                    max={1}
+                    step={0.1}
                     value={formData.haul_weighting.short}
-                    onChange={handleInputChange}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    onChange={handleShortHaulSlider}
+                    sx={{
+                      height: 10,
+                      color: "#3b82f6",
+                      "& .MuiSlider-rail": {
+                        color: "#e5e7eb",
+                        opacity: 1,
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-track": {
+                        color: "#3b82f6",
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-thumb": {
+                        width: 16,
+                        height: 16,
+                        backgroundColor: "white",
+                        border: "2px solid #3b82f6",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                        "&:hover": {
+                          boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                        },
+                        "&:focus, &.Mui-active": {
+                          boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+                        },
+                      },
+                      "@media (prefers-color-scheme: dark)": {
+                        color: "#3b82f6",
+                        "& .MuiSlider-rail": {
+                          color: "#4b5563",
+                        },
+                        "& .MuiSlider-thumb": {
+                          backgroundColor: "#1f2937",
+                          border: "2px solid #3b82f6",
+                        },
+                      },
+                    }}
                   />
                 </div>
                 <div>
@@ -555,16 +623,50 @@ export default function NewSchedulePage() {
                   >
                     Medium-haul: {formData.haul_weighting.medium.toFixed(1)}
                   </label>
-                  <input
-                    type="range"
-                    id="haul_weighting.medium"
-                    name="haul_weighting.medium"
-                    min="0"
-                    max="1"
-                    step="0.1"
+                  <Slider
+                    min={0}
+                    max={1}
+                    step={0.1}
                     value={formData.haul_weighting.medium}
-                    onChange={handleInputChange}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    onChange={handleMediumHaulSlider}
+                    sx={{
+                      height: 10,
+                      color: "#3b82f6",
+                      "& .MuiSlider-rail": {
+                        color: "#e5e7eb",
+                        opacity: 1,
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-track": {
+                        color: "#3b82f6",
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-thumb": {
+                        width: 16,
+                        height: 16,
+                        backgroundColor: "white",
+                        border: "2px solid #3b82f6",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                        "&:hover": {
+                          boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                        },
+                        "&:focus, &.Mui-active": {
+                          boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+                        },
+                      },
+                      "@media (prefers-color-scheme: dark)": {
+                        color: "#3b82f6",
+                        "& .MuiSlider-rail": {
+                          color: "#4b5563",
+                        },
+                        "& .MuiSlider-thumb": {
+                          backgroundColor: "#1f2937",
+                          border: "2px solid #3b82f6",
+                        },
+                      },
+                    }}
                   />
                 </div>
                 <div>
@@ -574,16 +676,50 @@ export default function NewSchedulePage() {
                   >
                     Long-haul: {formData.haul_weighting.long.toFixed(1)}
                   </label>
-                  <input
-                    type="range"
-                    id="haul_weighting.long"
-                    name="haul_weighting.long"
-                    min="0"
-                    max="1"
-                    step="0.1"
+                  <Slider
+                    min={0}
+                    max={1}
+                    step={0.1}
                     value={formData.haul_weighting.long}
-                    onChange={handleInputChange}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    onChange={handleLongHaulSlider}
+                    sx={{
+                      height: 10,
+                      color: "#3b82f6",
+                      "& .MuiSlider-rail": {
+                        color: "#e5e7eb",
+                        opacity: 1,
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-track": {
+                        color: "#3b82f6",
+                        height: 10,
+                        borderRadius: 4,
+                      },
+                      "& .MuiSlider-thumb": {
+                        width: 16,
+                        height: 16,
+                        backgroundColor: "white",
+                        border: "2px solid #3b82f6",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                        "&:hover": {
+                          boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                        },
+                        "&:focus, &.Mui-active": {
+                          boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+                        },
+                      },
+                      "@media (prefers-color-scheme: dark)": {
+                        color: "#3b82f6",
+                        "& .MuiSlider-rail": {
+                          color: "#4b5563",
+                        },
+                        "& .MuiSlider-thumb": {
+                          backgroundColor: "#1f2937",
+                          border: "2px solid #3b82f6",
+                        },
+                      },
+                    }}
                   />
                 </div>
               </div>
