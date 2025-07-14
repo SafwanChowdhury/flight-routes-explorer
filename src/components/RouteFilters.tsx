@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Filter, RefreshCw, Clock } from "lucide-react";
-import RangeSlider from "react-range-slider-input";
-import "react-range-slider-input/dist/style.css";
+import Slider from "@mui/material/Slider";
 import SearchInput from "./SearchInput";
 import AirlineSearchInput from "./AirlineSearchInput";
 
@@ -119,7 +118,7 @@ export default function RouteFilters({
             </label>
             <AirlineSearchInput
               value={filters.airline_name}
-              onChange={(value) =>
+              onChange={(value: string) =>
                 setFilters((prev) => ({ ...prev, airline_name: value }))
               }
               placeholder="Search airline..."
@@ -134,7 +133,7 @@ export default function RouteFilters({
             <div className="flex items-center space-x-2">
               <SearchInput
                 value={filters.departure_iata}
-                onChange={(value) =>
+                onChange={(value: string) =>
                   setFilters((prev) => ({ ...prev, departure_iata: value }))
                 }
                 placeholder="Search airport or city..."
@@ -171,7 +170,7 @@ export default function RouteFilters({
             </label>
             <SearchInput
               value={filters.arrival_iata}
-              onChange={(value) =>
+              onChange={(value: string) =>
                 setFilters((prev) => ({ ...prev, arrival_iata: value }))
               }
               placeholder="Search airport or city..."
@@ -273,23 +272,63 @@ export default function RouteFilters({
 
             {/* Range Slider Component */}
             <div className="py-2">
-              <RangeSlider
+              <Slider
                 min={MIN_DURATION}
                 max={MAX_DURATION}
                 step={5}
                 value={durationRange}
-                onInput={handleDurationRangeChange}
-                className="custom-range-slider"
+                onChange={(_, value) =>
+                  handleDurationRangeChange(value as [number, number])
+                }
+                valueLabelDisplay="off"
+                disableSwap
+                marks={[
+                  { value: 0, label: "0h" },
+                  { value: 360, label: "6h" },
+                  { value: 720, label: "12h" },
+                  { value: 1080, label: "18h" },
+                  { value: 1440, label: "24h" },
+                ]}
+                sx={{
+                  height: 10,
+                  color: "#3b82f6",
+                  "& .MuiSlider-rail": {
+                    color: "#e5e7eb",
+                    opacity: 1,
+                    height: 10,
+                    borderRadius: 4,
+                  },
+                  "& .MuiSlider-track": {
+                    color: "#3b82f6",
+                    height: 10,
+                    borderRadius: 4,
+                  },
+                  "& .MuiSlider-thumb": {
+                    width: 16,
+                    height: 16,
+                    backgroundColor: "white",
+                    border: "2px solid #3b82f6",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
+                    },
+                    "&:focus, &.Mui-active": {
+                      boxShadow: "0 0 0 4px rgba(59,130,246,0.15)",
+                    },
+                  },
+                  // Dark mode support
+                  "@media (prefers-color-scheme: dark)": {
+                    color: "#3b82f6",
+                    "& .MuiSlider-rail": {
+                      color: "#4b5563",
+                    },
+                    "& .MuiSlider-thumb": {
+                      backgroundColor: "#1f2937",
+                      border: "2px solid #3b82f6",
+                    },
+                  },
+                }}
               />
-            </div>
-
-            {/* Duration markers */}
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>0h</span>
-              <span>6h</span>
-              <span>12h</span>
-              <span>18h</span>
-              <span>24h</span>
             </div>
           </div>
         </div>
