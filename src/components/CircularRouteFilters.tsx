@@ -19,6 +19,7 @@ interface CircularRouteFiltersProps {
     min_duration: string;
     limit: string;
     all: string;
+    contains_airport: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -30,6 +31,7 @@ interface CircularRouteFiltersProps {
       min_duration: string;
       limit: string;
       all: string;
+      contains_airport: string;
     }>
   >;
   durationRange: [number, number];
@@ -38,7 +40,7 @@ interface CircularRouteFiltersProps {
 
 // Duration range constants
 const MIN_DURATION = 0;
-const MAX_DURATION = 1440; // 24 hours in minutes
+const MAX_DURATION = 4320; // 3 days in minutes
 
 export default function CircularRouteFilters({
   onApplyFilters,
@@ -61,6 +63,10 @@ export default function CircularRouteFilters({
 
   const handleAirportSelect = (result: any) => {
     setFilters((prev) => ({ ...prev, start_airport: result.iata }));
+  };
+
+  const handleContainsAirportSelect = (result: any) => {
+    setFilters((prev) => ({ ...prev, contains_airport: result.iata }));
   };
 
   const handleAirlineSelect = (result: any) => {
@@ -120,6 +126,24 @@ export default function CircularRouteFilters({
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Leave empty to search from all airports
+            </p>
+          </div>
+
+          {/* Contains Airport */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Contains Airport (IATA or Name)
+            </label>
+            <SearchInput
+              value={filters.contains_airport}
+              onChange={(value) =>
+                setFilters((prev) => ({ ...prev, contains_airport: value }))
+              }
+              placeholder="e.g. LHR or Heathrow"
+              onSelect={handleContainsAirportSelect}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Show only routes that include this airport anywhere in the pattern
             </p>
           </div>
 

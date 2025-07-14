@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, Search } from "lucide-react";
 import { getCircularRoutes } from "@/lib/api";
 import CircularRouteFilters from "./CircularRouteFilters";
+import SimBriefButton from "./SimBriefButton";
 
 // Define a type for circular route objects
 interface CircularRoute {
@@ -43,6 +44,32 @@ export default function CircularRoutesList() {
   const [selectedRoute, setSelectedRoute] = useState<CircularRoute | null>(
     null
   );
+  const [selectedAircraft, setSelectedAircraft] = useState("");
+  const [aircraftList, setAircraftList] = useState<
+    { name: string; code: string }[]
+  >([]);
+  const [simBriefClicked, setSimBriefClicked] = useState<{
+    [segmentIndex: number]: boolean;
+  }>({});
+
+  useEffect(() => {
+    // Load aircraft data for dropdown
+    fetch("/aircraft.json")
+      .then((response) => response.json())
+      .then((data) => {
+        setAircraftList(data.aircraft);
+      })
+      .catch((error) => {
+        console.error("Error loading aircraft data:", error);
+      });
+  }, []);
+
+  // Reset SimBrief clicked state when popup closes
+  useEffect(() => {
+    if (!selectedRoute) {
+      setSimBriefClicked({});
+    }
+  }, [selectedRoute]);
 
   // Filter parameters
   const [filters, setFilters] = useState({
@@ -54,17 +81,36 @@ export default function CircularRoutesList() {
     min_duration: searchParams.get("min_duration") || "",
     limit: searchParams.get("limit") || "20",
     all: searchParams.get("all") || "false",
+    contains_airport: searchParams.get("contains_airport") || "",
   });
 
   // Duration range constants
   const MIN_DURATION = 0;
-  const MAX_DURATION = 1440; // 24 hours in minutes
+  const MAX_DURATION = 4320; // 3 days in minutes
 
   // State for the dual range slider - initialize from URL params
   const [durationRange, setDurationRange] = useState<[number, number]>([
     parseInt(filters.min_duration) || MIN_DURATION,
     parseInt(filters.max_duration) || MAX_DURATION,
   ]);
+
+  // Add local pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50; // Fixed page size for 'all results' mode
+
+  // Reset page to 1 when routes or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [routes, filters.all]);
+
+  // Determine which routes to display
+  const paginatedRoutes =
+    filters.all === "true"
+      ? routes.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+      : routes;
+
+  const totalPages =
+    filters.all === "true" ? Math.ceil(routes.length / pageSize) : 1;
 
   // Update duration range when filters change (e.g., from URL params)
   useEffect(() => {
@@ -116,6 +162,10 @@ export default function CircularRoutesList() {
         params.all = filters.all;
       }
 
+      if (filters.contains_airport) {
+        params.contains_airport = filters.contains_airport;
+      }
+
       const data = await getCircularRoutes(params);
       setRoutes(data.results || []);
     } catch (err: any) {
@@ -160,6 +210,7 @@ export default function CircularRoutesList() {
       min_duration: "",
       limit: "20",
       all: "false",
+      contains_airport: "",
     };
     setFilters(clearedFilters);
 
@@ -240,10 +291,10 @@ export default function CircularRoutesList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {routes.length > 0 ? (
-                    routes.map((route, index) => (
+                  {paginatedRoutes.length > 0 ? (
+                    paginatedRoutes.map((route, index) => (
                       <tr
-                        key={index}
+                        key={index + (currentPage - 1) * pageSize}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         onClick={() => setSelectedRoute(route)}
                       >
@@ -287,11 +338,11 @@ export default function CircularRoutesList() {
 
             {/* Mobile Card View */}
             <div className="md:hidden">
-              {routes.length > 0 ? (
+              {paginatedRoutes.length > 0 ? (
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {routes.map((route, index) => (
+                  {paginatedRoutes.map((route, index) => (
                     <div
-                      key={index}
+                      key={index + (currentPage - 1) * pageSize}
                       className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                       onClick={() => setSelectedRoute(route)}
                     >
@@ -333,13 +384,77 @@ export default function CircularRoutesList() {
               {routes.length !== 1 ? "s" : ""}
             </div>
           )}
+
+          {/* Pagination controls for 'all results' mode */}
+          {filters.all === "true" && totalPages > 1 && (
+            <div className="mt-4 flex flex-wrap justify-center items-center space-x-2 gap-y-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                title="First page"
+              >
+                ⏮ First
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                title="Previous page"
+              >
+                ‹ Prev
+              </button>
+              <span className="mx-2 flex items-center space-x-1">
+                <label htmlFor="pagination-page-input" className="sr-only">
+                  Page number
+                </label>
+                <span>Page</span>
+                <input
+                  id="pagination-page-input"
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={currentPage}
+                  onChange={(e) => {
+                    let val = Number(e.target.value);
+                    if (isNaN(val)) val = 1;
+                    val = Math.max(1, Math.min(totalPages, val));
+                    setCurrentPage(val);
+                  }}
+                  className="w-16 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-center text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ width: 50 }}
+                  placeholder="Page"
+                  title="Page number"
+                />
+                <span>of {totalPages}</span>
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                title="Next page"
+              >
+                Next ›
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                title="Last page"
+              >
+                Last ⏭
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Route Details Popup - TODO: Create CircularRouteDetailsPopup component */}
       {selectedRoute && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-200">
                 {selectedRoute.pattern_type} Route Details
@@ -405,20 +520,63 @@ export default function CircularRoutesList() {
                   {selectedRoute.segments.map((segment, index) => (
                     <div
                       key={index}
-                      className="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded"
                     >
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        {segment.segment_order}.
-                      </span>
-                      <span className="text-sm text-gray-900 dark:text-gray-200">
-                        {segment.departure_iata} → {segment.arrival_iata}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ({formatDuration(segment.duration_min)})
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {segment.segment_order}.
+                        </span>
+                        <span className="text-sm text-gray-900 dark:text-gray-200">
+                          {segment.departure_iata} ({segment.departure_name}) →{" "}
+                          {segment.arrival_iata} ({segment.arrival_name})
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          ({formatDuration(segment.duration_min)})
+                        </span>
+                      </div>
+                      <SimBriefButton
+                        origin={segment.departure_iata}
+                        destination={segment.arrival_iata}
+                        airline={selectedRoute.airline_id?.toString() || ""}
+                        type={selectedAircraft}
+                        onClick={() =>
+                          setSimBriefClicked((prev) => ({
+                            ...prev,
+                            [index]: true,
+                          }))
+                        }
+                        isClicked={!!simBriefClicked[index]}
+                      />
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Aircraft dropdown centered at the bottom */}
+              <div className="mt-8 flex flex-col items-center justify-center">
+                <label
+                  htmlFor="aircraft-select"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Select Aircraft for SimBrief
+                </label>
+                <select
+                  id="aircraft-select"
+                  value={selectedAircraft}
+                  onChange={(e) => setSelectedAircraft(e.target.value)}
+                  className="block rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  style={{ maxWidth: 320 }}
+                >
+                  <option value="">None</option>
+                  {aircraftList.map((aircraft) => (
+                    <option key={aircraft.code} value={aircraft.code}>
+                      {aircraft.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
+                  This selection will be used for all SimBrief buttons above
+                </p>
               </div>
             </div>
           </div>
