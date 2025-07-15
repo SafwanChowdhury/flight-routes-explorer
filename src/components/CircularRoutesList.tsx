@@ -454,7 +454,14 @@ export default function CircularRoutesList() {
 
       {/* Route Details Popup - TODO: Create CircularRouteDetailsPopup component */}
       {selectedRoute && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedRoute(null);
+            }
+          }}
+        >
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-200">
