@@ -11,8 +11,8 @@ interface SimBriefButtonProps {
   onClick?: () => void;
   isClicked?: boolean;
   className?: string;
-  deph?: number;
-  depm?: number;
+  departureHour?: number;
+  departureMinute?: number;
 }
 
 interface Aircraft {
@@ -28,8 +28,8 @@ export default function SimBriefButton({
   onClick,
   isClicked,
   className,
-  deph,
-  depm,
+  departureHour,
+  departureMinute,
 }: SimBriefButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [airlineICAO, setAirlineICAO] = useState(airline);
@@ -74,8 +74,10 @@ export default function SimBriefButton({
       airline: airlineICAO,
       type: aircraftToUse,
     });
-    if (deph !== undefined) params.append("deph", String(deph));
-    if (depm !== undefined) params.append("depm", String(depm));
+    if (departureHour !== undefined)
+      params.append("deph", String(departureHour));
+    if (departureMinute !== undefined)
+      params.append("depm", String(departureMinute));
 
     // Open SimBrief in a new tab
     window.open(

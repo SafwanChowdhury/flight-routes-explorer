@@ -42,8 +42,8 @@ export default function ScheduledFlightPopup({
 
   // Extract departure hour and minute
   const departureDate = new Date(flight.departure_time);
-  const departureHour = departureDate.getHours();
-  const departureMinute = departureDate.getMinutes();
+  const departureHourUTC = departureDate.getUTCHours();
+  const departureMinuteUTC = departureDate.getUTCMinutes();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -199,8 +199,8 @@ export default function ScheduledFlightPopup({
             destination={flight.arrival_airport}
             airline={flight.airline_iata || ""}
             type={selectedAircraft}
-            deph={departureHour}
-            depm={departureMinute}
+            departureHour={departureHourUTC}
+            departureMinute={departureMinuteUTC}
             className="py-4 px-8 text-base min-w-[120px]"
           />
         </Box>
