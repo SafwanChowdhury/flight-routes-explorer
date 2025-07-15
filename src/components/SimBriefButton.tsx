@@ -10,6 +10,9 @@ interface SimBriefButtonProps {
   type?: string;
   onClick?: () => void;
   isClicked?: boolean;
+  className?: string;
+  departureHour?: number;
+  departureMinute?: number;
 }
 
 interface Aircraft {
@@ -24,6 +27,9 @@ export default function SimBriefButton({
   type,
   onClick,
   isClicked,
+  className,
+  departureHour,
+  departureMinute,
 }: SimBriefButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [airlineICAO, setAirlineICAO] = useState(airline);
@@ -68,6 +74,10 @@ export default function SimBriefButton({
       airline: airlineICAO,
       type: aircraftToUse,
     });
+    if (departureHour !== undefined)
+      params.append("deph", String(departureHour));
+    if (departureMinute !== undefined)
+      params.append("depm", String(departureMinute));
 
     // Open SimBrief in a new tab
     window.open(
@@ -84,10 +94,11 @@ export default function SimBriefButton({
       onClick={handleSimBriefClick}
       disabled={isLoading}
       className={
-        `font-bold py-2 px-4 rounded flex items-center text-white` +
+        `font-bold rounded flex items-center text-white ` +
         (isClicked
-          ? " bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-          : " bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600")
+          ? "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+          : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600") +
+        (className ? ` ${className}` : " py-2 px-4 ")
       }
       style={{ minWidth: 44 }}
       title="Open in SimBrief"
@@ -116,7 +127,7 @@ export default function SimBriefButton({
           </svg>
         </>
       ) : (
-        <span className="text-xs">SimBrief</span>
+        <span className="text-sm">SimBrief</span>
       )}
     </button>
   );

@@ -15,6 +15,7 @@ import {
 import { generateSchedule } from "@/lib/api";
 import { GeneratedSchedule } from "@/types/schedule";
 import { useToast } from "@/components/ToastProvider";
+import { Switch } from "@mui/material";
 
 export default function SchedulePage() {
   const router = useRouter();
@@ -23,7 +24,10 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [currentDaySchedule, setCurrentDaySchedule] = useState<any>(null);
+  const [timezone, setTimezone] = useState<"utc" | "local">("utc");
   const { showToast } = useToast();
+  const isUTC = timezone === "utc";
+  const isLocal = timezone === "local";
 
   useEffect(() => {
     // Check if we have a valid schedule in storage
@@ -128,7 +132,43 @@ export default function SchedulePage() {
           Flight Schedule
         </h1>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          {/* Timezone Sliding Toggle */}
+          <div className="flex items-center mr-2">
+            <div className="relative flex w-32 h-9 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner cursor-pointer select-none transition-colors">
+              {/* Sliding background */}
+              <span
+                className={`absolute top-0 left-0 w-1/2 h-full rounded-full transition-transform duration-300 z-0 bg-blue-600 ${
+                  timezone === "utc" ? "translate-x-0" : "translate-x-full"
+                }`}
+                style={{ boxShadow: "0 2px 8px rgba(59,130,246,0.10)" }}
+              ></span>
+              {/* UTC label */}
+              <button
+                className={`relative z-10 flex-1 text-xs font-semibold rounded-full transition-colors duration-200 h-full flex items-center justify-center ${
+                  timezone === "utc"
+                    ? "text-white"
+                    : "text-gray-600 dark:text-gray-300"
+                }`}
+                onClick={() => setTimezone("utc")}
+                type="button"
+              >
+                UTC
+              </button>
+              {/* Local label */}
+              <button
+                className={`relative z-10 flex-1 text-xs font-semibold rounded-full transition-colors duration-200 h-full flex items-center justify-center ${
+                  timezone === "local"
+                    ? "text-white"
+                    : "text-gray-600 dark:text-gray-300"
+                }`}
+                onClick={() => setTimezone("local")}
+                type="button"
+              >
+                Local
+              </button>
+            </div>
+          </div>
           {isValid && schedule && (
             <button
               onClick={handleReloadSchedule}
@@ -174,9 +214,16 @@ export default function SchedulePage() {
       ) : (
         <div className="space-y-6">
           <ScheduleSummary schedule={schedule} />
-          <ScheduleCalendar onDayScheduleChange={setCurrentDaySchedule} />
+          <ScheduleCalendar
+            onDayScheduleChange={setCurrentDaySchedule}
+            timezone={timezone}
+            setTimezone={setTimezone}
+          />
           {currentDaySchedule && (
-            <DayScheduleInfo daySchedule={currentDaySchedule} />
+            <DayScheduleInfo
+              daySchedule={currentDaySchedule}
+              timezone={timezone}
+            />
           )}
         </div>
       )}

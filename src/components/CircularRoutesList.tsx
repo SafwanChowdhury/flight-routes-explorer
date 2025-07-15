@@ -7,6 +7,13 @@ import { getCircularRoutes } from "@/lib/api";
 import CircularRouteFilters from "./CircularRouteFilters";
 import SimBriefButton from "./SimBriefButton";
 import { useToast } from "@/components/ToastProvider";
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  Select as MUISelect,
+  MenuItem,
+} from "@mui/material";
 
 // Define a type for circular route objects
 interface CircularRoute {
@@ -547,31 +554,36 @@ export default function CircularRoutesList() {
               </div>
 
               {/* Aircraft dropdown centered at the bottom */}
-              <div className="mt-8 flex flex-col items-center justify-center">
-                <label
-                  htmlFor="aircraft-select"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Select Aircraft for SimBrief
-                </label>
-                <select
-                  id="aircraft-select"
-                  value={selectedAircraft}
-                  onChange={(e) => setSelectedAircraft(e.target.value)}
-                  className="block rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  style={{ maxWidth: 320 }}
-                >
-                  <option value="">None</option>
-                  {aircraftList.map((aircraft) => (
-                    <option key={aircraft.code} value={aircraft.code}>
-                      {aircraft.name}
-                    </option>
-                  ))}
-                </select>
+              <Box
+                mt={8}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <FormControl sx={{ minWidth: 220 }} size="small">
+                  <InputLabel id="aircraft-select-label">
+                    Select Aircraft
+                  </InputLabel>
+                  <MUISelect
+                    labelId="aircraft-select-label"
+                    id="aircraft-select"
+                    value={selectedAircraft}
+                    label="Select Aircraft"
+                    onChange={(e) => setSelectedAircraft(e.target.value)}
+                  >
+                    <MenuItem value="">None</MenuItem>
+                    {aircraftList.map((aircraft) => (
+                      <MenuItem key={aircraft.code} value={aircraft.code}>
+                        {aircraft.name}
+                      </MenuItem>
+                    ))}
+                  </MUISelect>
+                </FormControl>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
                   This selection will be used for all SimBrief buttons above
                 </p>
-              </div>
+              </Box>
             </div>
           </div>
         </div>

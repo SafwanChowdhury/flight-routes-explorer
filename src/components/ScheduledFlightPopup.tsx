@@ -1,6 +1,9 @@
 import { X, Calendar, Clock } from "lucide-react";
 import SimBriefButton from "./SimBriefButton";
 import { FlightLeg } from "@/types/schedule";
+import aircraftData from "@/../public/aircraft.json";
+import { useState } from "react";
+import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 interface ScheduledFlightPopupProps {
   flight: FlightLeg;
@@ -32,9 +35,22 @@ export default function ScheduledFlightPopup({
     });
   };
 
+  // Add state for selected aircraft
+  const [selectedAircraft, setSelectedAircraft] = useState<string>(
+    flight.aircraft || ""
+  );
+
+  // Extract departure hour and minute
+  const departureDate = new Date(flight.departure_time);
+  const departureHourUTC = departureDate.getUTCHours();
+  const departureMinuteUTC = departureDate.getUTCMinutes();
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+      <div
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 flex flex-col"
+        style={{ minHeight: 500 }}
+      >
         <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Scheduled Flight Details
@@ -151,15 +167,43 @@ export default function ScheduledFlightPopup({
               </p>
             </div>
           </div>
-
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <SimBriefButton
-              origin={flight.departure_airport}
-              destination={flight.arrival_airport}
-              airline={flight.airline_iata || ""}
-            />
-          </div>
         </div>
+
+        {/* Aircraft Selector - centered above SimBrief */}
+        <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
+          <FormControl sx={{ minWidth: 220 }} size="small">
+            <InputLabel id="aircraft-select-label">Select Aircraft</InputLabel>
+            <Select
+              labelId="aircraft-select-label"
+              id="aircraft-select"
+              value={selectedAircraft}
+              label="Select Aircraft"
+              onChange={(e) => setSelectedAircraft(e.target.value)}
+            >
+              <MenuItem value="">Select aircraft</MenuItem>
+              {aircraftData.aircraft.map(
+                (ac: { name: string; code: string }) => (
+                  <MenuItem key={ac.code} value={ac.code}>
+                    {ac.name} ({ac.code})
+                  </MenuItem>
+                )
+              )}
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* SimBrief Button - centered at the bottom */}
+        <Box display="flex" justifyContent="center" mt={4} mb={2}>
+          <SimBriefButton
+            origin={flight.departure_airport}
+            destination={flight.arrival_airport}
+            airline={flight.airline_iata || ""}
+            type={selectedAircraft}
+            departureHour={departureHourUTC}
+            departureMinute={departureMinuteUTC}
+            className="py-4 px-8 text-base min-w-[120px]"
+          />
+        </Box>
       </div>
     </div>
   );

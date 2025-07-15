@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,13 +10,18 @@ import {
 import { FlightLeg, DaySchedule } from "@/types/schedule";
 import { getSchedule } from "@/lib/scheduleStorage";
 import ScheduledFlightPopup from "./ScheduledFlightPopup";
+import { Switch } from "@mui/material";
 
 interface ScheduleCalendarProps {
   onDayScheduleChange?: (daySchedule: DaySchedule | null) => void;
+  timezone?: "utc" | "local";
+  setTimezone?: (tz: "utc" | "local") => void;
 }
 
 export default function ScheduleCalendar({
   onDayScheduleChange,
+  timezone: propTimezone = "utc",
+  setTimezone: propSetTimezone,
 }: ScheduleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [flights, setFlights] = useState<FlightLeg[]>([]);
@@ -24,6 +29,12 @@ export default function ScheduleCalendar({
   const [currentDaySchedule, setCurrentDaySchedule] =
     useState<DaySchedule | null>(null);
   const [hourHeight, setHourHeight] = useState(60); // Height in pixels for each hour
+  const [internalTimezone, setInternalTimezone] = useState<"utc" | "local">(
+    propTimezone
+  );
+  const timezone = propTimezone ?? internalTimezone;
+  const setTimezone = propSetTimezone ?? setInternalTimezone;
+  const timeGridRef = useRef<HTMLDivElement>(null);
 
   // Load flights for the current day
   useEffect(() => {
@@ -66,6 +77,20 @@ export default function ScheduleCalendar({
     }
   }, [currentDate]);
 
+  useEffect(() => {
+    if (flights.length > 0 && timeGridRef.current) {
+      // Find the top position of the first flight
+      const firstFlight = flights[0];
+      const top = calculateTopPosition(firstFlight.departure_time);
+      // Scroll so the first flight is about 40px from the top (or 0 if already near top)
+      const offset = Math.max(top - 40, 0);
+      timeGridRef.current.scrollTo({ top: offset, behavior: "smooth" });
+    } else if (timeGridRef.current) {
+      // Reset scroll if no flights
+      timeGridRef.current.scrollTo({ top: 0 });
+    }
+  }, [flights, timezone, currentDate]);
+
   // Navigate to previous day
   const goToPreviousDay = () => {
     const newDate = new Date(currentDate);
@@ -83,7 +108,20 @@ export default function ScheduleCalendar({
   // Format times in a readable way
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (timezone === "utc") {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "UTC",
+      });
+    } else {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
   };
 
   // Format duration as hours and minutes
@@ -106,10 +144,14 @@ export default function ScheduleCalendar({
   // Calculate top position in pixels based on time
   const calculateTopPosition = (timeString: string) => {
     const date = new Date(timeString);
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-
-    // Convert to pixels - each hour is hourHeight pixels
+    let hours, minutes;
+    if (timezone === "utc") {
+      hours = date.getUTCHours();
+      minutes = date.getUTCMinutes();
+    } else {
+      hours = date.getHours();
+      minutes = date.getMinutes();
+    }
     return hours * hourHeight + (minutes / 60) * hourHeight;
   };
 
@@ -128,7 +170,13 @@ export default function ScheduleCalendar({
         style={{ height: `${hourHeight}px` }}
       >
         <div className="w-16 pr-2 text-right text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-          {`${hour.toString().padStart(2, "0")}:00`}
+          {timezone === "utc"
+            ? `${hour.toString().padStart(2, "0")}:00`
+            : new Date(0, 0, 0, hour).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}
         </div>
         <div className="flex-grow"></div>
       </div>
@@ -139,6 +187,8 @@ export default function ScheduleCalendar({
     <div className="space-y-6">
       {/* Calendar View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        {/* Timezone Toggle */}
+        {/* (Removed toggle UI from here; now only in parent) */}
         {/* Calendar Header */}
         <div className="flex justify-between items-center mb-4">
           <button
@@ -175,7 +225,10 @@ export default function ScheduleCalendar({
         </div>
 
         {/* Time Grid */}
-        <div className="relative border-t border-l border-gray-200 dark:border-gray-700 overflow-y-auto h-[600px]">
+        <div
+          className="relative border-t border-l border-gray-200 dark:border-gray-700 overflow-y-auto h-[600px]"
+          ref={timeGridRef}
+        >
           <div className="relative flex">
             {/* Time markers on the left */}
             <div className="sticky left-0 z-10 bg-white dark:bg-gray-800">
