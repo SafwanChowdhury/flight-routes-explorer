@@ -44,6 +44,7 @@ export interface HaulPreferences {
     airline_iata?: string;
     airline_name?: string;
     distance_km?: number;
+    aircraft?: string; // Optional aircraft code for this leg
   }
 
   export interface FlightBlock {
