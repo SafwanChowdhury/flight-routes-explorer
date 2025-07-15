@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Calendar, Plus, Plane } from "lucide-react";
+import { Clock, Calendar, Plus, Plane, RotateCw, Loader2 } from "lucide-react";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleSummary from "@/components/ScheduleSummary";
 import DayScheduleInfo from "@/components/DayScheduleInfo";
@@ -10,15 +10,20 @@ import {
   getSchedule,
   isScheduleValid,
   clearSchedule,
+  saveSchedule,
 } from "@/lib/scheduleStorage";
+import { generateSchedule } from "@/lib/api";
 import { GeneratedSchedule } from "@/types/schedule";
+import { useToast } from "@/components/ToastProvider";
 
 export default function SchedulePage() {
   const router = useRouter();
   const [schedule, setSchedule] = useState<GeneratedSchedule | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reloading, setReloading] = useState(false);
   const [currentDaySchedule, setCurrentDaySchedule] = useState<any>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Check if we have a valid schedule in storage
@@ -46,6 +51,65 @@ export default function SchedulePage() {
     router.push("/schedule/new");
   };
 
+  const handleReloadSchedule = async () => {
+    if (!schedule) return;
+
+    setReloading(true);
+    try {
+      // Use the same configuration as the current schedule
+      const config = schedule.config;
+
+      console.log("Reloading schedule with config:", config);
+
+      // Generate new schedule with the same configuration
+      const result = await generateSchedule(config);
+
+      if (result.status === "success" && result.schedule) {
+        try {
+          // Clear the current schedule first
+          clearSchedule();
+
+          // Save the new schedule to local storage
+          saveSchedule(result.schedule);
+
+          // Update the current state
+          setSchedule(result.schedule);
+          setIsValid(true);
+          setCurrentDaySchedule(null);
+
+          showToast("Schedule reloaded successfully!");
+        } catch (storageError) {
+          console.error("Failed to save reloaded schedule:", storageError);
+          showToast("Schedule reloaded but failed to save. Please try again.");
+        }
+      } else {
+        throw new Error(result.message || "Failed to reload schedule");
+      }
+    } catch (err: any) {
+      console.error("Error reloading schedule:", err);
+
+      // Handle specific API errors
+      if (err.response?.status === 400) {
+        showToast(
+          err.response.data?.message ||
+            "Invalid configuration. Please check your settings."
+        );
+      } else if (err.response?.status === 404) {
+        showToast("Airline not found. Please select a different airline.");
+      } else if (err.response?.status === 500) {
+        showToast("Server error. Please try again later.");
+      } else if (err.code === "NETWORK_ERROR") {
+        showToast("Network error. Please check your connection and try again.");
+      } else {
+        showToast(
+          err.message || "An error occurred while reloading the schedule"
+        );
+      }
+    } finally {
+      setReloading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center p-8">
@@ -64,13 +128,30 @@ export default function SchedulePage() {
           Flight Schedule
         </h1>
 
-        <button
-          onClick={handleNewSchedule}
-          className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          <span>Build New Schedule</span>
-        </button>
+        <div className="flex gap-3">
+          {isValid && schedule && (
+            <button
+              onClick={handleReloadSchedule}
+              disabled={reloading}
+              className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-500 text-white rounded-md shadow-sm"
+            >
+              {reloading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <RotateCw className="w-5 h-5 mr-2" />
+              )}
+              <span>{reloading ? "Reloading..." : "Reload Schedule"}</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleNewSchedule}
+            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            <span>Build New Schedule</span>
+          </button>
+        </div>
       </div>
 
       {!isValid || !schedule ? (
