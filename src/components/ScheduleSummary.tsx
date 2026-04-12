@@ -267,10 +267,12 @@ export default function ScheduleSummary({ schedule }: ScheduleSummaryProps) {
                 </div>
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">
-                    Min Rest (Long Haul):
+                    Extra days:
                   </span>
                   <div className="font-medium text-gray-800 dark:text-gray-200">
-                    {schedule.config.minimum_rest_hours_between_long_haul} hr
+                    {schedule.config.allow_extra_days === false
+                      ? "No (strict length)"
+                      : "Yes"}
                   </div>
                 </div>
               </div>

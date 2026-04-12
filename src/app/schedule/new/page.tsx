@@ -50,7 +50,7 @@ export default function NewSchedulePage() {
       start: "06:00",
       end: "23:00",
     },
-    minimum_rest_hours_between_long_haul: 8,
+    allow_extra_days: true,
     repetition_mode: false,
   });
 
@@ -168,10 +168,13 @@ export default function NewSchedulePage() {
         ...prev,
         repetition_mode: checkbox.checked,
       }));
-    } else if (
-      name === "days" ||
-      name === "minimum_rest_hours_between_long_haul"
-    ) {
+    } else if (name === "allow_extra_days" && type === "checkbox") {
+      const checkbox = e.target as HTMLInputElement;
+      setFormData((prev) => ({
+        ...prev,
+        allow_extra_days: checkbox.checked,
+      }));
+    } else if (name === "days") {
       // Handle numeric fields
       setFormData((prev) => ({
         ...prev,
@@ -321,14 +324,6 @@ export default function NewSchedulePage() {
         throw new Error("Operating hours end time must be after start time");
       }
 
-      // Validate minimum rest hours
-      if (
-        formData.minimum_rest_hours_between_long_haul < 6 ||
-        formData.minimum_rest_hours_between_long_haul > 24
-      ) {
-        throw new Error("Minimum rest hours must be between 6 and 24 hours");
-      }
-
       // Validate single leg day ratio
       if (
         formData.prefer_single_leg_day_ratio < 0 ||
@@ -360,8 +355,7 @@ export default function NewSchedulePage() {
           start: formData.operating_hours.start,
           end: formData.operating_hours.end,
         },
-        minimum_rest_hours_between_long_haul:
-          formData.minimum_rest_hours_between_long_haul,
+        allow_extra_days: formData.allow_extra_days,
         repetition_mode: formData.repetition_mode,
       };
 
@@ -762,25 +756,6 @@ export default function NewSchedulePage() {
                 className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
-
-            <div>
-              <label
-                htmlFor="minimum_rest_hours_between_long_haul"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Minimum Rest Between Long-haul (Hours)
-              </label>
-              <input
-                type="number"
-                id="minimum_rest_hours_between_long_haul"
-                name="minimum_rest_hours_between_long_haul"
-                min="6"
-                max="24"
-                value={formData.minimum_rest_hours_between_long_haul}
-                onChange={handleInputChange}
-                className="w-full p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
           </div>
         </div>
 
@@ -815,6 +790,32 @@ export default function NewSchedulePage() {
                 Higher values favor single-destination days over
                 multi-destination days
               </p>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="allow_extra_days"
+                name="allow_extra_days"
+                checked={formData.allow_extra_days !== false}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="allow_extra_days"
+                className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+              >
+                Allow extra days beyond schedule length
+              </label>
+              <div className="ml-2 text-gray-500 dark:text-gray-400 cursor-help group relative">
+                <Info className="h-4 w-4" />
+                <div className="hidden group-hover:block absolute z-10 w-72 p-2 bg-gray-100 dark:bg-gray-700 text-xs rounded shadow-lg -left-20 top-6">
+                  When unchecked, the schedule is strictly limited to the number
+                  of days you set. The last day may still run past midnight for
+                  turnaround buffer. When checked, the generator may add days if
+                  needed to complete routing.
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center">

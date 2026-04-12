@@ -73,7 +73,7 @@ async function testFrontendAPI() {
       turnaround_time_minutes: 45,
       preferred_countries: ["US"],
       preferred_regions: [],
-      minimum_rest_hours_between_long_haul: 8,
+      allow_extra_days: true,
       repetition_mode: false,
     };
 
@@ -105,7 +105,7 @@ async function testFrontendAPI() {
         turnaround_time_minutes: 45,
         preferred_countries: [],
         preferred_regions: [],
-        minimum_rest_hours_between_long_haul: 8,
+        allow_extra_days: true,
         repetition_mode: false,
       });
       console.log("❌ Expected error but got success");

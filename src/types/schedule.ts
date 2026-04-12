@@ -25,7 +25,14 @@ export interface HaulPreferences {
     haul_weighting: HaulWeighting;
     prefer_single_leg_day_ratio: number;
     operating_hours: OperatingHours;
-    minimum_rest_hours_between_long_haul: number;
+    /**
+     * When false, strictly restricts the schedule to `days` length (final day
+     * buffer may still cross a day boundary). When true or omitted, the
+     * generator may extend beyond the requested day count when needed.
+     */
+    allow_extra_days?: boolean;
+    /** Sent to the schedule API; default 8 when omitted (backend still validates this field). */
+    minimum_rest_hours_between_long_haul?: number;
     repetition_mode: boolean;
   }
   

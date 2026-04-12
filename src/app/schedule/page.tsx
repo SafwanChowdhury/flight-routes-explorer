@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Calendar, Plus, Plane, RotateCw, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  Copy,
+  Loader2,
+  Plus,
+  RotateCw,
+} from "lucide-react";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import ScheduleSummary from "@/components/ScheduleSummary";
 import DayScheduleInfo from "@/components/DayScheduleInfo";
@@ -28,6 +34,7 @@ export default function SchedulePage() {
   const { showToast } = useToast();
   const isUTC = timezone === "utc";
   const isLocal = timezone === "local";
+  const isDev = process.env.NODE_ENV === "development";
 
   useEffect(() => {
     // Check if we have a valid schedule in storage
@@ -114,6 +121,17 @@ export default function SchedulePage() {
     }
   };
 
+  const handleCopyScheduleJson = async () => {
+    if (!schedule) return;
+    const text = JSON.stringify(schedule, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Schedule JSON copied to clipboard");
+    } catch {
+      showToast("Could not copy to clipboard");
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center p-8">
@@ -170,18 +188,31 @@ export default function SchedulePage() {
             </div>
           </div>
           {isValid && schedule && (
-            <button
-              onClick={handleReloadSchedule}
-              disabled={reloading}
-              className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-500 text-white rounded-md shadow-sm"
-            >
-              {reloading ? (
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
-                <RotateCw className="w-5 h-5 mr-2" />
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={handleReloadSchedule}
+                disabled={reloading}
+                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-500 text-white rounded-md shadow-sm"
+              >
+                {reloading ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <RotateCw className="w-5 h-5 mr-2" />
+                )}
+                <span>{reloading ? "Reloading..." : "Reload Schedule"}</span>
+              </button>
+              {isDev && (
+                <button
+                  type="button"
+                  onClick={handleCopyScheduleJson}
+                  className="flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-md shadow-sm"
+                  title="Copy full schedule JSON (dev only)"
+                >
+                  <Copy className="w-5 h-5 mr-2" />
+                  <span>Copy JSON</span>
+                </button>
               )}
-              <span>{reloading ? "Reloading..." : "Reload Schedule"}</span>
-            </button>
+            </div>
           )}
 
           <button

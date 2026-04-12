@@ -6,6 +6,18 @@ const SCHEDULE_API_URL = process.env.NEXT_PUBLIC_SCHEDULE_API_URL || 'http://loc
 const api = axios.create({ baseURL: API_BASE_URL });
 const scheduleApi = axios.create({ baseURL: SCHEDULE_API_URL });
 
+/** Schedule API still requires this field; UI does not expose it for now. */
+const DEFAULT_MINIMUM_REST_HOURS_BETWEEN_LONG_HAUL = 8;
+
+function withScheduleGenerateDefaults(config: Record<string, unknown>) {
+  return {
+    ...config,
+    minimum_rest_hours_between_long_haul:
+      config.minimum_rest_hours_between_long_haul ??
+      DEFAULT_MINIMUM_REST_HOURS_BETWEEN_LONG_HAUL,
+  };
+}
+
 export async function getStats() {
   const { data } = await api.get('/stats');
   return data;
@@ -65,13 +77,19 @@ export async function getScheduleAirline(id: number) {
 }
 
 export async function validateScheduleConfig(config: any) {
-  const { data } = await scheduleApi.post('/validate', config);
+  const { data } = await scheduleApi.post(
+    '/validate',
+    withScheduleGenerateDefaults(config)
+  );
   return data;
 }
 
 export async function generateSchedule(config: any) {
   try {
-    const { data } = await scheduleApi.post('/generate', config);
+    const { data } = await scheduleApi.post(
+      '/generate',
+      withScheduleGenerateDefaults(config)
+    );
     return data;
   } catch (error: any) {
     console.error('Schedule generation error:', error);
