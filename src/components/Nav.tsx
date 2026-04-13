@@ -10,6 +10,7 @@ import {
   Calendar,
   Route,
   RotateCcw,
+  Puzzle,
 } from "lucide-react";
 
 export default function Nav() {
@@ -41,6 +42,11 @@ export default function Nav() {
       href: "/schedule",
       icon: <Calendar className="h-5 w-5" />,
       label: "Schedule",
+    },
+    {
+      href: "/wordle",
+      icon: <Puzzle className="h-5 w-5" />,
+      label: "Wordle",
     },
   ];
 
